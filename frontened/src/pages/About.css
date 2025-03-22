@@ -1,0 +1,182 @@
+.about-container {
+  padding: 40px;
+  max-width: 800px;
+  margin: 80px auto;
+  background: white;
+  border-radius: 15px;
+  border: 2px solid var(--btn-color);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Page background */
+body {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6e9ff 100%);
+}
+
+/* Decorative border elements */
+.about-container::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  height: 10px;
+  background: linear-gradient(90deg, var(--btn-color), var(--helper-color));
+  border-radius: 15px 15px 0 0;
+}
+
+.about-container h1 {
+  font-size: 2.5em;
+  margin-bottom: 30px;
+  color: var(--dark-color);
+  position: relative;
+  display: inline-block;
+  padding-bottom: 15px;
+}
+
+/* Underline decoration for main heading */
+.about-container h1::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--btn-color), var(--helper-color));
+  border-radius: 2px;
+}
+
+.about-container p {
+  font-size: 1.2em;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.about-container h2 {
+  font-size: 2em;
+  margin: 30px 0 20px;
+  color: var(--dark-color);
+  position: relative;
+  display: inline-block;
+  padding: 0 15px;
+}
+
+/* Section divider */
+.about-container h2::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 30px;
+  height: 2px;
+  background-color: var(--helper-color);
+  transform: translateY(-50%);
+}
+
+.about-container h2::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  width: 30px;
+  height: 2px;
+  background-color: var(--helper-color);
+  transform: translateY(-50%);
+}
+
+/* Skills section styling */
+.about-container ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0 auto 30px;
+  max-width: 600px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.about-container ul li {
+  font-size: 1.1em;
+  color: #555;
+  padding: 12px 15px;
+  background-color: #f8f9ff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 1px solid #e0e7ff;
+  border-left: 4px solid var(--btn-color);
+}
+
+.about-container ul li:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--btn-color);
+}
+
+.about-container a {
+  color: var(--btn-color);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.about-container a:hover {
+  color: var(--dark-color);
+}
+
+/* Animated underline for links */
+.about-container a::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--helper-color);
+  transition: width 0.3s ease;
+}
+
+.about-container a:hover::after {
+  width: 100%;
+}
+
+/* Contact section styling */
+.about-container p:last-of-type {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f8f9ff;
+  border-radius: 10px;
+  border: 1px solid #e0e7ff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .about-container {
+    padding: 30px 20px;
+    margin: 40px 20px;
+  }
+
+  .about-container h1 {
+    font-size: 2em;
+  }
+
+  .about-container p, .about-container ul li {
+    font-size: 1em;
+  }
+
+  .about-container h2 {
+    font-size: 1.5em;
+  }
+  
+  .about-container ul {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,440 @@
+/* Full-screen submission page */
+.submission-history-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: 80px; /* Add padding to account for fixed header */
+  margin: 0;
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+/* Ensure content doesn't get hidden under fixed header */
+.submission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+/* Styled heading for Submission History */
+.submission-header h1 {
+  position: relative;
+  color: #1e3a8a;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  padding-bottom: 8px;
+}
+
+/* Decorative underline for the heading */
+.submission-header h1::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 2px;
+}
+
+/* Add a subtle highlight effect */
+.submission-header h1 span {
+  position: relative;
+  z-index: 1;
+}
+
+.submission-header h1 span::before {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background-color: rgba(96, 165, 250, 0.2);
+  z-index: -1;
+  transform: skew(-12deg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .submission-header h1 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Button container */
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Refresh button styling */
+.refresh-button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.refresh-button:hover {
+  background-color: #3a7bc8;
+}
+
+.refresh-button .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Back button styling */
+.back-button {
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #2563eb;
+}
+
+/* Submission table container */
+.submission-table-container {
+  flex: 1;
+  padding: 1rem 2rem;
+  overflow-x: auto;
+}
+
+/* Table styles */
+.submission-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: #111827; /* Black text for table */
+}
+
+.submission-table th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  text-align: center; /* Center align headers */
+  padding: 1rem;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.submission-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center; /* Center align cell content */
+  vertical-align: middle; /* Vertically center content */
+}
+
+.submission-table tr:last-child td {
+  border-bottom: none;
+}
+
+.submission-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center; /* Center badge text */
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  min-width: 100px; /* Consistent width for badges */
+}
+
+.status-badge.accepted {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.wrong-answer {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-badge.compilation-error {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.time-limit-exceeded {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-badge.error {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.status-badge.in-queue {
+  background-color: #f0ad4e;
+  color: #fff;
+}
+
+/* Language badge */
+.language-badge {
+  display: inline-flex;
+  justify-content: center; /* Center badge text */
+  padding: 0.25rem 0.5rem;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  min-width: 80px; /* Consistent width */
+}
+
+/* Problem title */
+.problem-title {
+  font-weight: 500;
+  color: #1f2937;
+  text-align: center; /* Center align problem title */
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  justify-content: center; /* Center align buttons */
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center button content */
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s;
+  min-width: 80px; /* Consistent button width */
+}
+
+.action-button.retry {
+  background-color: #dbeafe;
+  color: #1e40af; /* Dark blue text */
+}
+
+.action-button.retry:hover {
+  background-color: #bfdbfe;
+}
+
+.action-button.view {
+  background-color: #4a6eb5;
+  margin-left: 5px;
+}
+
+.action-button.view:hover {
+  background-color: #3a5a95;
+}
+
+.action-button.primary {
+  background-color: #3b82f6;
+  color: white; /* Keep white for contrast */
+  padding: 0.5rem 1rem;
+}
+
+.action-button.primary:hover {
+  background-color: #2563eb;
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Loading state */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0.25rem solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state p {
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* Add sort controls styling */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.sort-label {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-right: 15px;
+}
+
+.sort-select {
+  height: 40px;
+  padding: 0 15px;
+  border-radius: 6px;
+  border: 1px solid #e0e7ff;
+  background-color: white;
+  color: var(--dark-color);
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 180px;
+  
+  /* Custom dropdown arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23646cff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+  appearance: none;
+}
+
+.sort-select:hover {
+  border-color: var(--btn-color);
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--btn-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Pagination controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 15px;
+}
+
+.pagination-button {
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #4f46e5;
+}
+
+.pagination-button:disabled {
+  background-color: #a5a6f6;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sort-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .sort-select {
+    width: 100%;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .submission-page {
+    padding-top: 60px; /* Smaller padding for mobile */
+  }
+  
+  .submission-header {
+    margin-top: 15px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .submission-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 1rem 1.5rem;
+  }
+  
+  .header-buttons {
+    width: 100%;
+  }
+  
+  .refresh-button,
+  .back-button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+

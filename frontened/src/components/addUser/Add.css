@@ -1,0 +1,239 @@
+
+.addProblem {
+  max-width: 900px;
+  margin: 120px auto 40px; /* Added top margin for navbar */
+  padding: 30px;
+  background: linear-gradient(to bottom, #ffffff, #f8f9ff);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(100, 108, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.addProblem::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--btn-color), var(--helper-color));
+  border-radius: 15px 15px 0 0;
+}
+
+.backButton {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  color: var(--dark-color);
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
+}
+
+.backButton:hover {
+  background-color: #e0e0e0;
+  transform: translateX(-3px);
+}
+
+.backButton::before {
+  content: "←";
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.addProblem h3 {
+  color: var(--dark-color);
+  font-size: 2.4rem;
+  text-align: center;
+  margin: 15px 0 30px;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.addProblem h3::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--btn-color), var(--helper-color));
+  border-radius: 2px;
+}
+
+.addProblemForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputGroup {
+  margin-bottom: 5px;
+  position: relative;
+}
+
+.inputGroup label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  color: var(--dark-color);
+  font-size: 1.6rem;
+}
+
+.inputGroup input,
+.inputGroup textarea,
+.inputGroup select {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1.6rem;
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  color: var(--dark-color);
+}
+
+.inputGroup input:focus,
+.inputGroup textarea:focus,
+.inputGroup select:focus {
+  border-color: var(--btn-color);
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.2);
+  outline: none;
+}
+
+.inputGroup textarea {
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.inputGroup select {
+  height: 48px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23646cff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+  appearance: none;
+}
+
+.testCasesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.testCasesHeader label {
+  font-weight: 600;
+  color: var(--dark-color);
+  font-size: 1.6rem;
+}
+
+.addTestCaseBtn {
+  background-color: #e0e7ff;
+  color: var(--btn-color);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 15px;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.addTestCaseBtn:hover {
+  background-color: #c7d2fe;
+}
+
+.addTestCaseBtn::before {
+  content: "+";
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.testCaseGroup {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding: 15px;
+  background-color: #f8f9ff;
+  border-radius: 8px;
+  border: 1px solid #e0e7ff;
+  position: relative;
+}
+
+.testCaseGroup input {
+  flex: 1;
+}
+
+.testCaseGroup button {
+  padding: 8px 12px;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
+}
+
+.testCaseGroup button:hover {
+  background-color: #fecaca;
+}
+
+.testCaseNumber {
+  position: absolute;
+  top: -10px;
+  left: 15px;
+  background-color: var(--btn-color);
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+button[type='submit'] {
+  padding: 14px;
+  background: linear-gradient(90deg, var(--btn-color), var(--helper-color));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 10px rgba(100, 108, 255, 0.2);
+}
+
+button[type='submit']:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(100, 108, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .addProblem {
+    padding: 20px;
+    margin: 100px 15px 30px;
+  }
+  
+  .testCaseGroup {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .testCaseGroup button {
+    align-self: flex-end;
+  }
+}

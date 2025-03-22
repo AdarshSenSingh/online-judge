@@ -1,0 +1,423 @@
+
+
+.problems-page {
+  padding: 120px 20px 40px; /* Increased top padding to account for fixed header */
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6e9ff 100%);
+  min-height: 100vh;
+}
+
+.problems-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 0 20px;
+}
+
+.problems-header h1 {
+  font-size: 2.2em;
+  color: var(--dark-color);
+  position: relative;
+  display: inline-block;
+  padding-bottom: 10px;
+}
+
+.problems-header h1::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--btn-color), var(--helper-color));
+  border-radius: 2px;
+}
+
+.problem-actions-container {
+  display: flex;
+  align-items: center;
+}
+
+.add-problem-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--btn-color);
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.add-problem-button:hover {
+  background: var(--helper-color);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.add-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+/* Style for the submission history button */
+.history-button {
+  display: flex;
+  align-items: center;
+  background-color: #6366f1;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s;
+  margin-left: 10px;
+}
+
+.history-button:hover {
+  background-color: #4f46e5;
+}
+
+.history-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+/* Update the problem-actions-container to display buttons in a row */
+.problem-actions-container {
+  display: flex;
+  align-items: center;
+}
+
+.problems-table-container {
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  border: 2px solid var(--btn-color);
+  position: relative;
+}
+
+.problems-table-container::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  height: 10px;
+  background: linear-gradient(90deg, var(--btn-color), var(--helper-color));
+  border-radius: 15px 15px 0 0;
+}
+
+.problems-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.problems-table th {
+  background-color: #f8f9ff;
+  color: var(--dark-color);
+  font-weight: 600;
+  text-align: left;
+  padding: 16px 20px;
+  border-bottom: 2px solid #e0e7ff;
+}
+
+.problems-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e7ff;
+  vertical-align: middle;
+}
+
+.problems-table tr:last-child td {
+  border-bottom: none;
+}
+
+.problems-table tr:hover {
+  background-color: #f8f9ff;
+  border-left: none; /* Remove any potential left border */
+}
+
+/* Remove the blue line (border-left) from problem items */
+.problems-table td,
+.problems-table tr,
+.problem-title {
+  border-left: none !important; /* Ensure no left border appears */
+}
+
+/* If the blue line is added via ::before or ::after pseudo-elements, remove those */
+.problems-table tr::before,
+.problems-table td::before,
+.problem-title::before {
+  display: none !important;
+}
+
+.problem-title {
+  font-weight: 500;
+  color: var(--dark-color);
+  text-align: left !important; /* Force left alignment */
+}
+
+.difficulty-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: 600;
+  text-align: center;
+  min-width: 80px;
+}
+
+.difficulty-badge.easy {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.difficulty-badge.medium {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.difficulty-badge.hard {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.problem-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.action-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.action-button.delete {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.action-button.delete:hover {
+  background-color: #fecaca;
+}
+
+.action-button.edit {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.action-button.edit:hover {
+  background-color: #c7d2fe;
+}
+
+.action-button.solve {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.action-button.solve:hover {
+  background-color: #a7f3d0;
+}
+
+/* Empty state styling */
+.no-problems-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.no-problems-container p {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.add-problem-button.large {
+  padding: 16px 28px;
+  font-size: 18px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .problems-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .add-problem-button {
+    align-self: flex-start;
+  }
+  
+  .problems-table th,
+  .problems-table td {
+    padding: 12px 15px;
+  }
+  
+  .problem-actions {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .action-button {
+    width: 100%;
+  }
+}
+
+/* Style for the serial number column */
+.sn-column {
+  font-weight: 600;
+  color: var(--dark-color);
+  text-align: center;
+  width: 5%; /* Make this column narrower */
+}
+
+/* Adjust column alignments to be consistent */
+.problems-table th:nth-child(1),
+.problems-table td:nth-child(1) {
+  width: 5%; /* Serial number column */
+  text-align: center;
+}
+
+.problems-table th:nth-child(2),
+.problems-table td:nth-child(2) {
+  width: 45%; /* Problem title column */
+  text-align: left; /* Ensure title is left-aligned */
+}
+
+.problems-table th:nth-child(3),
+.problems-table td:nth-child(3) {
+  width: 15%; /* Difficulty column */
+  text-align: center;
+}
+
+.problems-table th:nth-child(4),
+.problems-table td:nth-child(4) {
+  width: 35%; /* Actions column */
+  text-align: left; /* Align actions to the left */
+}
+
+/* Ensure problem title is left-aligned */
+.problem-title {
+  font-weight: 500;
+  color: var(--dark-color);
+  text-align: left !important; /* Force left alignment */
+}
+
+/* Make sure table headers match content alignment */
+.problems-table th {
+  text-align: inherit; /* Will inherit alignment from the column-specific rules above */
+}
+
+/* Add pagination styles */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 15px;
+}
+
+.pagination-button {
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #4f46e5;
+}
+
+.pagination-button:disabled {
+  background-color: #a5a6f6;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+/* Add sort controls styling */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.sort-label {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-right: 15px;
+}
+
+.sort-select {
+  height: 40px;
+  padding: 0 15px;
+  border-radius: 6px;
+  border: 1px solid #e0e7ff;
+  background-color: white;
+  color: var(--dark-color);
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 180px;
+  
+  /* Custom dropdown arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23646cff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+  appearance: none;
+}
+
+.sort-select:hover {
+  border-color: var(--btn-color);
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--btn-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sort-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .sort-select {
+    width: 100%;
+  }
+}
