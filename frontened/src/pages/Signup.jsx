@@ -40,7 +40,7 @@ const Signup = () => {
     e.preventDefault();
     try {
       // Check if environment variable is defined
-      const backendUrl = import.meta.env.VITE_BACKEND_1_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       const url_1 = `${backendUrl}/auth`;
       
       console.log(`Attempting to connect to: ${url_1}/register`);
@@ -160,3 +160,4 @@ const Signup = () => {
 };
 
 export default Signup;
+

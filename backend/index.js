@@ -34,3 +34,5 @@ dbConnection().then(() => {
         console.log(`Server is listening on ${PORT} (without DB connection)`);
     });
 });
+
+

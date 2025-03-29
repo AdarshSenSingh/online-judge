@@ -25,7 +25,7 @@ const submissionSchema = new mongoose.Schema({
   verdict: {
     status: {
       type: String,
-      enum: ['Accepted', 'Wrong Answer', 'Time Limit Exceeded', 'Compiler Error', 'Runtime Error', 'System Error', 'Processing', 'Error'],
+      enum: ['Accepted', 'Wrong Answer', 'Time Limit Exceeded', 'Compiler Error', 'Compilation Error', 'Runtime Error', 'System Error', 'Processing', 'Error'],
       default: 'Processing'
     },
     message: String,
@@ -50,10 +50,9 @@ const submissionSchema = new mongoose.Schema({
   results: [Object]
 });
 
-// Add this index for faster queries
-submissionSchema.index({ userId: 1, problemId: 1 });
-
-const Submission = mongoose.model('Submission', submissionSchema);
+// Make sure we're using the same model everywhere
+const Submission = mongoose.models.Submission || mongoose.model('Submission', submissionSchema);
 
 export default Submission;
+
 

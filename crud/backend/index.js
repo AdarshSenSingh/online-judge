@@ -16,17 +16,28 @@ console.log("PORT:", process.env.PORT);
 
 const app = express();
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: function(origin, callback) {
+        const allowedOrigins = [
+            'https://online-judge-app.vercel.app',
+            'http://localhost:5173'
+        ];
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || process.env.CORS_ORIGIN === '*') {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const URL = process.env.MONGOURL;
-const PORT = process.env.PORT || 2005;
+const URL = process.env.MONGOURL || process.env.MONGODB_URI || "mongodb://localhost:27017/online-judge";
+const PORT = process.env.PORT || 2000;
 
 // Debug log to check if URL is defined
-console.log("MongoDB URL:", URL ? "URL is defined" : "URL is undefined");
 
 app.get("/", (req, res) => {
     res.send("CRUD API is running!");
@@ -78,5 +89,7 @@ const startServer = () => {
 connectDB();
 
 app.use("/crud", route);
+
+
 
 

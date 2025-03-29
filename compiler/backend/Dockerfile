@@ -8,8 +8,7 @@ WORKDIR /app
 RUN apk update && apk add --no-cache \
     g++ \
     python3 \
-    openjdk11 \
-    redis
+    openjdk11
 
 # Create symbolic link for python
 RUN ln -sf /usr/bin/python3 /usr/bin/python
@@ -24,17 +23,16 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p codes inputs outputs
 
+# Set environment variable for Docker
+ENV DOCKER_ENV=true
+
 # Expose the service port
 EXPOSE 8000
 
-# Create startup script - fixed version
-RUN echo '#!/bin/sh' > /app/start.sh && \
-    echo 'redis-server --daemonize yes' >> /app/start.sh && \
-    echo 'sleep 1' >> /app/start.sh && \
-    echo 'node index.js' >> /app/start.sh && \
-    chmod +x /app/start.sh
-
 # Start the application
-CMD ["/app/start.sh"]
+CMD ["node", "index.js"]
+
+
+
 
 

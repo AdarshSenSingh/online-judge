@@ -3,6 +3,24 @@ import { validateTestCases } from './testCaseValidator.js';
 import moment from 'moment';
 import { addJobToQueue, jobQueue } from './jobQueue.js';
 import mongoose from 'mongoose';
+import { generateFile } from './generateFile.js';
+import { generateInputFile } from './generateInputFile.js';
+import { executeCpp } from './executeCpp.js';
+import { executeJava } from './executeJava.js';
+import { executePython } from './executePython.js';
+
+// Define timeLimit if it's not already defined
+const timeLimit = 5; // 5 seconds time limit
+
+// Helper function to normalize output for comparison
+const normalize = (output) => {
+  return output.replace(/\r\n/g, '\n').trim();
+};
+
+// Helper function to prepare input
+const prepareInput = (input) => {
+  return input.trim();
+};
 
 // 1. Fetch test cases from the crud backend
 const fetchTestCases = async (problemId) => {
@@ -13,22 +31,6 @@ const fetchTestCases = async (problemId) => {
     console.error('Error fetching test cases:', error);
     return [];
   }
-};
-
-// Enhanced normalization function that preserves exact format but handles line endings
-const normalize = (str) => {
-  if (!str) return '';
-  // Only normalize line endings and trim trailing/leading whitespace
-  return str
-    .toString()
-    .replace(/\r\n/g, '\n')  // Normalize Windows line endings
-    .trim();
-};
-
-// Function to prepare input for the compiler
-const prepareInput = (input) => {
-  // Remove any formatting that might confuse the compiler
-  return input.trim();
 };
 
 // Validate test cases before running code against them
@@ -65,218 +67,112 @@ const runCodeAgainstTestCases = async (problemId, code, language = 'cpp') => {
     }
     
     const results = [];
-    const timeLimit = 5; // 5 seconds time limit
     
-    // Check if Bull queue is available
-    const useQueue = typeof jobQueue !== 'undefined' && jobQueue !== null;
+    // Check if Redis is available
+    const skipRedis = process.env.SKIP_REDIS === 'TRUE';
     
-    // If queue is not available, process directly
-    if (!useQueue) {
-      console.log('Queue not available, processing test cases directly');
-      
-      // First check if code compiles at all (for compiled languages)
-      if (language === 'cpp' || language === 'java') {
-        try {
-          console.log('Processing direct compilation check');
-          const filePath = await generateFile(language, code);
-          
-          if (language === 'cpp') {
-            await executeCpp(filePath, null, true); // compile only
-          } else if (language === 'java') {
-            await executeJava(filePath, null, true); // compile only
-          }
-        } catch (compileError) {
-          console.error('Compilation error:', compileError.message);
-          return testCases.map(testCase => ({
-            input: testCase.input,
-            expectedOutput: testCase.output,
-            actualOutput: null,
-            passed: false,
-            status: "Compiler Error",
-            error: compileError.message || "Compilation failed"
-          }));
+    // Always process directly for now to ensure functionality
+    console.log('Processing test cases directly');
+    
+    // First check if code compiles at all (for compiled languages)
+    if (language === 'cpp' || language === 'java') {
+      try {
+        console.log('Processing direct compilation check');
+        const filePath = await generateFile(language, code);
+        
+        if (language === 'cpp') {
+          await executeCpp(filePath, null, true); // compile only
+        } else if (language === 'java') {
+          await executeJava(filePath, null, true); // compile only
         }
+      } catch (compileError) {
+        console.error('Compilation error:', compileError.message);
+        return testCases.map(testCase => ({
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: null,
+          passed: false,
+          status: "Compiler Error",
+          error: compileError.message || "Compilation failed"
+        }));
       }
-      
-      // Process each test case directly
-      for (const testCase of testCases) {
-        try {
-          const preparedInput = prepareInput(testCase.input);
-          console.log(`Processing test case with input: ${preparedInput}`);
-          
-          const filePath = await generateFile(language, code);
-          const inputPath = await generateInputFile(preparedInput);
-          
-          const start = moment(new Date());
-          let output;
-          
-          if (language === "java") {
-            output = await executeJava(filePath, inputPath);
-          } else if (language === "python") {
-            output = await executePython(filePath, inputPath);
-          } else {
-            output = await executeCpp(filePath, inputPath);
-          }
-          
-          const end = moment(new Date());
-          const executionTime = end.diff(start, "seconds", true);
-          
-          const expectedOutput = normalize(testCase.output);
-          const actualOutput = normalize(output);
-          
-          let passed = expectedOutput === actualOutput;
-          let status = passed ? "Accepted" : "Wrong Answer";
-          
-          // Check for TLE
-          if (executionTime > timeLimit) {
-            passed = false;
-            status = "Time Limit Exceeded";
-          }
-          
-          results.push({
-            input: testCase.input,
-            expectedOutput,
-            actualOutput,
-            passed,
-            status,
-            executionTime,
-            error: null
-          });
-        } catch (error) {
-          results.push({
-            input: testCase.input,
-            expectedOutput: testCase.output,
-            actualOutput: null,
-            passed: false,
-            status: "Runtime Error",
-            error: error.message || error.stderr || "Runtime error"
-          });
-        }
-      }
-      
-      return results;
     }
     
-    // Process each test case using the job queue
-    const jobPromises = [];
-    
+    // Process each test case directly
     for (const testCase of testCases) {
       try {
         const preparedInput = prepareInput(testCase.input);
         console.log(`Processing test case with input: ${preparedInput}`);
         
-        // Add job to queue
-        const jobId = await addJobToQueue(code, language, preparedInput);
-        const job = await jobQueue.getJob(jobId);
+        const filePath = await generateFile(language, code);
+        const inputPath = await generateInputFile(preparedInput);
         
-        // Create a promise that will resolve with the job result or reject after timeout
-        const jobPromise = new Promise(async (resolve, reject) => {
-          try {
-            // Set a timeout based on the problem's time limit plus a small buffer
-            const timeoutMs = (timeLimit * 1000) + 2000;
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error("Time Limit Exceeded")), timeoutMs)
-            );
-            
-            // Wait for either job completion or timeout
-            const result = await Promise.race([job.finished(), timeoutPromise]);
-            resolve({ testCase, result });
-          } catch (error) {
-            reject({ testCase, error });
-          }
-        });
+        const start = moment(new Date());
+        let output;
         
-        jobPromises.push(jobPromise);
-      } catch (error) {
-        console.error('Error adding job to queue:', error);
-        results.push({
-          input: testCase.input,
-          expectedOutput: testCase.output,
-          actualOutput: null,
-          passed: false,
-          status: "System Error",
-          error: error.message
-        });
-      }
-    }
-    
-    // Wait for all jobs to complete
-    const jobResults = await Promise.allSettled(jobPromises);
-    
-    // Process results
-    for (const jobResult of jobResults) {
-      if (jobResult.status === 'fulfilled') {
-        const { testCase, result } = jobResult.value;
-        
-        if (!result.success) {
-          // Runtime error
-          results.push({
-            input: testCase.input,
-            expectedOutput: testCase.output,
-            actualOutput: null,
-            passed: false,
-            status: "Runtime Error",
-            error: result.error
-          });
-          continue;
+        if (language === "java") {
+          output = await executeJava(filePath, inputPath);
+        } else if (language === "python") {
+          output = await executePython(filePath, inputPath);
+        } else {
+          output = await executeCpp(filePath, inputPath);
         }
         
+        const end = moment(new Date());
+        const executionTime = end.diff(start, "seconds", true);
+        
         const expectedOutput = normalize(testCase.output);
-        const actualOutput = normalize(result.output);
+        const actualOutput = normalize(output);
         
         let passed = expectedOutput === actualOutput;
         let status = passed ? "Accepted" : "Wrong Answer";
         
         // Check for TLE
-        if (result.executionTime > timeLimit) {
+        if (executionTime > timeLimit) {
           passed = false;
           status = "Time Limit Exceeded";
         }
         
         results.push({
           input: testCase.input,
-          expectedOutput,
-          actualOutput,
+          expectedOutput: testCase.output,
+          actualOutput: output,
           passed,
           status,
-          executionTime: result.executionTime,
-          error: null
+          executionTime
         });
-      } else {
-        // Job failed or timed out
-        const { testCase, error } = jobResult.reason;
-        const isTimeLimit = error.message === "Time Limit Exceeded";
-        
+      } catch (error) {
         results.push({
           input: testCase.input,
           expectedOutput: testCase.output,
           actualOutput: null,
           passed: false,
-          status: isTimeLimit ? "Time Limit Exceeded" : "Runtime Error",
-          error: error.message
+          status: "Runtime Error",
+          error: error.message || "Error executing code"
         });
       }
     }
     
+    // Make sure we're returning an array of results
+    console.log(`Returning ${results.length} test case results`);
     return results;
   } catch (error) {
-    console.error('Error running code against test cases:', error);
-    throw error;
+    console.error(`Error running code against test cases:`, error);
+    // Return a single error result instead of throwing
+    return [{
+      input: "Error occurred before test cases could be run",
+      expectedOutput: "",
+      actualOutput: "",
+      passed: false,
+      status: "System Error",
+      error: error.message || "Error running test cases"
+    }];
   }
 };
 
 // 3. Determine the overall verdict - ensure proper structure
-const determineVerdict = (results, validationResult) => {
-  if (!results || results.length === 0) {
-    return {
-      status: "Error",
-      message: "No test cases were executed"
-    };
-  }
-  
-  // Log the results for debugging
-  console.log('[DEBUG] Results for verdict determination:', 
-    results.map(r => ({ status: r.status, passed: r.passed, error: r.error ? 'Has error' : 'No error' })));
+const determineVerdict = (results) => {
+  console.log(`Determining verdict from ${results.length} test case results`);
   
   // Check if any test case failed
   const failedTestCase = results.find(r => !r.passed);
@@ -303,44 +199,40 @@ const getVerdict = async (problemId, code, language = 'cpp', submissionId = null
   try {
     console.log(`[DEBUG] getVerdict called for problem ${problemId}, language ${language}, submissionId ${submissionId || 'null'}`);
     
-    // If submissionId is provided, we should update the existing submission, not create a new one
+    // If submissionId is provided, we should update the existing submission
     if (submissionId) {
-      const Submission = mongoose.model('Submission');
-      
-      // First check if submission exists
-      const existingSubmission = await Submission.findById(submissionId);
-      
-      if (!existingSubmission) {
-        console.error(`[DEBUG] Submission ${submissionId} not found`);
-        throw new Error(`Submission with ID ${submissionId} not found`);
+      try {
+        const Submission = mongoose.model('Submission');
+        
+        // Update submission status to Processing
+        await Submission.findByIdAndUpdate(
+          submissionId,
+          {
+            'verdict.status': 'Processing',
+            'verdict.message': 'Submission is being evaluated'
+          }
+        );
+        console.log(`[DEBUG] Updated submission ${submissionId} to Processing status`);
+      } catch (updateError) {
+        console.error(`Error updating submission ${submissionId} to Processing:`, updateError);
+        // Continue processing even if update fails
       }
-      
-      // Update submission status to Processing
-      await Submission.findByIdAndUpdate(
-        submissionId,
-        {
-          'verdict.status': 'Processing',
-          'verdict.message': 'Submission is being evaluated'
-        }
-      );
     }
     
-    // First validate the test cases
-    const validationResult = await validateBeforeRunning(problemId);
-    
-    // Run code against test cases using job queue
+    // Run code against test cases
+    console.log(`[DEBUG] Running code against test cases for problem ${problemId}`);
     const results = await runCodeAgainstTestCases(problemId, code, language);
+    console.log(`[DEBUG] Received ${results.length} test case results`);
     
     // Determine verdict
-    const verdict = determineVerdict(results, validationResult);
+    const verdict = determineVerdict(results);
     console.log(`[DEBUG] Verdict determined: ${verdict.status}`);
     
     // Update submission in database if submissionId is provided
     if (submissionId) {
-      console.log(`[DEBUG] Updating submission ${submissionId} with verdict: ${verdict.status}`);
-      const Submission = mongoose.model('Submission');
       try {
-        const updatedSubmission = await Submission.findByIdAndUpdate(
+        const Submission = mongoose.model('Submission');
+        const updateResult = await Submission.findByIdAndUpdate(
           submissionId,
           {
             verdict: verdict,
@@ -348,38 +240,39 @@ const getVerdict = async (problemId, code, language = 'cpp', submissionId = null
             status: 'completed',
             completedAt: new Date()
           },
-          { new: true }
+          { new: true } // Return the updated document
         );
-        
-        console.log(`[DEBUG] Submission ${submissionId} updated successfully:`, 
-          updatedSubmission ? `status=${updatedSubmission.status}` : 'Not found');
+        console.log(`[DEBUG] Updated submission ${submissionId} with verdict: ${JSON.stringify(verdict)}`);
+        console.log(`[DEBUG] Update result: ${updateResult ? 'Success' : 'Failed'}`);
       } catch (updateError) {
-        console.error(`[DEBUG] Error updating submission ${submissionId}:`, updateError);
-        throw updateError;
+        console.error(`Error updating submission ${submissionId} with verdict:`, updateError);
       }
     }
     
-    // Include validation info in the response
     return {
       verdict,
       results,
-      testCaseValidation: validationResult ? {
-        isValid: validationResult.isValid,
-        issueCount: validationResult.totalIssues || 0
-      } : null,
       timestamp: new Date().toISOString()
     };
   } catch (error) {
     console.error(`[DEBUG] Error in getVerdict:`, error);
     // If there's a submissionId, update the submission with the error
     if (submissionId) {
-      const Submission = mongoose.model('Submission');
-      await Submission.findByIdAndUpdate(submissionId, {
-        'verdict.status': 'Error',
-        'verdict.details': error.message || 'An error occurred during processing',
-        status: 'error',
-        completedAt: new Date()
-      });
+      try {
+        const Submission = mongoose.model('Submission');
+        await Submission.findByIdAndUpdate(submissionId, {
+          verdict: {
+            status: 'Error',
+            message: error.message || 'An error occurred during processing',
+            details: error.stack
+          },
+          status: 'error',
+          completedAt: new Date()
+        });
+        console.log(`[DEBUG] Updated submission ${submissionId} with error status`);
+      } catch (updateError) {
+        console.error(`Error updating submission ${submissionId} with error:`, updateError);
+      }
     }
     
     throw error;
@@ -387,6 +280,8 @@ const getVerdict = async (problemId, code, language = 'cpp', submissionId = null
 };
 
 export { getVerdict };
+
+
 
 
 

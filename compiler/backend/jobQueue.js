@@ -7,9 +7,21 @@ import { generateInputFile } from './generateInputFile.js';
 import moment from 'moment';
 import mongoose from 'mongoose';
 
+// Determine if running in Docker
+const isDocker = process.env.DOCKER_ENV === 'true';
+
+// Configure Redis connection
+const redisConfig = {
+  host: isDocker ? 'redis' : (process.env.REDIS_HOST || 'localhost'),
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: isDocker ? undefined : process.env.REDIS_PASSWORD,
+  tls: !isDocker && process.env.REDIS_TLS === 'true' ? {} : undefined,
+  maxRetriesPerRequest: 3
+};
+
 // Create a job queue with optimized settings
 const jobQueue = new Bull('code-execution-queue', {
-  redis: { host: process.env.REDIS_HOST || 'localhost', port: 6379 },
+  redis: redisConfig,
   limiter: {
     max: 5, // Max number of jobs processed in parallel
     duration: 5000 // Time window in milliseconds

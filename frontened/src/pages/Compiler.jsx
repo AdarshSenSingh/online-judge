@@ -67,6 +67,21 @@ if __name__ == "__main__":
       backend3: import.meta.env.VITE_BACKEND_3_URL
     });
     
+    // Check if backend is accessible
+    const checkBackendConnection = async () => {
+      try {
+        // Try to ping the backend
+        await axios.get(`${url_3}/health`);
+        console.log("Backend connection successful");
+      } catch (error) {
+        console.error("Backend connection failed:", error);
+        // Show a toast notification about connection issues
+        toast.error("Cannot connect to the code execution server. Please try again later.");
+      }
+    };
+    
+    checkBackendConnection();
+    
     const fetchProblem = async () => {
       try {
         const response = await axios.get(`${url_2}/getOne/${id}`);
@@ -77,7 +92,7 @@ if __name__ == "__main__":
     };
 
     fetchProblem();
-  }, [id]);
+  }, [id, url_2, url_3]);
 
   useEffect(() => {
     // Check if there's code to view from a submission
@@ -149,17 +164,23 @@ if __name__ == "__main__":
       // Use the environment variable with the correct URL
       const verdictUrl = `${url_3}/verdict/${problem._id}`;
       console.log("Calling verdict endpoint:", verdictUrl);
+      console.log("Token available:", !!token);
       
+      // First check if the server is reachable
+      try {
+        await axios.get(`${url_3}/health`);
+      } catch (connectionError) {
+        throw new Error("Cannot connect to the code execution server. Please check your connection and try again.");
+      }
+      
+      // Remove the Authorization header for now
       const response = await axios.post(
         verdictUrl,
         {
           language: language,
           code: code,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 30000 // 30 second timeout
         }
+        // Remove the headers object completely
       );
       
       console.log("Submission response:", response.data);
@@ -179,10 +200,21 @@ if __name__ == "__main__":
         // Set a flag to refresh submissions on the result page
         localStorage.setItem('refreshSubmissions', 'true');
         
-        // Navigate to the result page after a short delay
-        setTimeout(() => {
-          navigate('/result');
-        }, 5);
+        // Check if the submissions server is reachable before redirecting
+        try {
+          // Update this URL to match the correct port for your submissions service
+          const submissionsUrl = `${url_3}/health`;
+          await axios.get(submissionsUrl);
+          
+          // Only navigate if the submissions server is reachable
+          setTimeout(() => {
+            navigate('/result');
+          }, 5);
+        } catch (error) {
+          console.log("Submissions server not reachable, showing verdict on this page");
+          toast.success("Submission successful! Verdict is shown below.");
+          // Display the verdict on this page instead
+        }
       } else {
         const errorVerdict = {
           status: "Error",
@@ -196,10 +228,11 @@ if __name__ == "__main__":
       console.error("Error submitting solution:", error);
       const errorVerdict = {
         status: "Error",
-        message: error.message || "Unknown error",
+        message: error.message || "Network error. Please check your connection.",
         results: []
       };
       setVerdict(errorVerdict);
+      toast.error(error.message || "Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -311,6 +344,13 @@ if __name__ == "__main__":
 }
 
 export default Compiler;
+
+
+
+
+
+
+
 
 
 

@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Result.css';
+import { toast } from 'react-hot-toast';
 // Import the environment variable
-const url_3 = "http://localhost:8000";
+const url_3 = import.meta.env.VITE_BACKEND_3_URL || "http://localhost:8000";
 
 const Result = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -29,21 +30,29 @@ const Result = () => {
         return;
       }
       
-      // Request a large number of submissions to get all at once
-      // You can adjust this number based on your needs
+      // Log the token format for debugging
+      console.log("Token being used:", token.substring(0, 10) + "...");
+      console.log("User ID being used:", userId);
+      
+      // Request submissions from the correct endpoint
       const response = await axios.get(`${url_3}/submissions`, {
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         params: {
-          limit: 100, // Request more submissions at once
-          skip: 0
+          limit: 100,
+          skip: 0,
+          userId: userId // Add userId as a query parameter as well
         }
       });
+      
+      console.log("Submissions response:", response.data);
       
       const submissionsData = response.data.submissions || response.data;
       
       if (Array.isArray(submissionsData) && submissionsData.length > 0) {
+        console.log("Processing submissions data:", submissionsData);
         // Create a map using submissionId as key to identify unique submissions
         const uniqueSubmissions = {};
         
@@ -62,11 +71,26 @@ const Result = () => {
         
         // Convert the object to an array
         setSubmissions(Object.values(uniqueSubmissions));
+        console.log("Set submissions:", Object.values(uniqueSubmissions).length);
       } else {
+        console.log("No submissions found in response");
         setSubmissions([]);
       }
     } catch (error) {
       console.error('Error fetching submissions:', error);
+      
+      // If unauthorized, try to refresh token or redirect to login
+      if (error.response && error.response.status === 401) {
+        toast.error("Your session has expired. Please log in again.");
+        // Wait a moment before redirecting
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          navigate('/login');
+        }, 2000);
+      } else {
+        // Show a more specific error message
+        toast.error(`Failed to fetch submissions: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -114,20 +138,37 @@ const Result = () => {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const response = await axios.get('http://localhost:2000/crud/getAll');
-        const problems = {};
-        response.data.forEach(problem => {
-          problems[problem._id] = problem.title || 'Unknown Problem';
-        });
-        setProblemsMap(problems);
-        console.log("Problems map:", problems);
+        // Try the CRUD backend URL first
+        try {
+          const problemsUrl = import.meta.env.VITE_BACKEND_2_URL || 'http://localhost:2000';
+          const response = await axios.get(`${problemsUrl}/crud/getAll`);
+          const problems = {};
+          response.data.forEach(problem => {
+            problems[problem._id] = problem.title || 'Unknown Problem';
+          });
+          setProblemsMap(problems);
+          console.log("Problems map:", problems);
+        } catch (firstError) {
+          console.log("First attempt failed, trying alternative endpoint");
+          // If that fails, try the compiler service URL
+          const response = await axios.get(`${url_3}/problems`);
+          const problems = {};
+          response.data.forEach(problem => {
+            problems[problem._id] = problem.title || 'Unknown Problem';
+          });
+          setProblemsMap(problems);
+          console.log("Problems map from alternative endpoint:", problems);
+        }
       } catch (error) {
         console.error('Error fetching problems:', error);
+        toast.error("Failed to load problem details");
+        // Set a fallback map with unknown problems
+        setProblemsMap({});
       }
     };
 
     fetchProblems();
-  }, []);
+  }, [url_3]);
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -390,6 +431,18 @@ const Result = () => {
 };
 
 export default Result;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

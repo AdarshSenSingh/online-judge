@@ -27,7 +27,7 @@ const Login = () => {
   // Google login handler
   const handleGoogleLogin = () => {
     // Get the backend URL from environment variables
-    const backendUrl = import.meta.env.VITE_BACKEND_1_URL || 'http://localhost:5000';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
     
     // Redirect to Google auth endpoint
     window.location.href = `${backendUrl}/auth/google`;
@@ -38,7 +38,7 @@ const Login = () => {
     e.preventDefault();
     try {
       // Check if environment variable is defined
-      const backendUrl = import.meta.env.VITE_BACKEND_1_URL || 'http://localhost:5000';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
       const url_1 = `${backendUrl}/auth`;
       
       console.log(`Attempting to connect to: ${url_1}/login`);
@@ -151,5 +151,6 @@ const Login = () => {
 };
 
 export default Login;
+
 
 
