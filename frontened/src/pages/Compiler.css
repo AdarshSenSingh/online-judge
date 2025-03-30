@@ -283,6 +283,7 @@
   }
 }
 
+/* Verdict styling */
 .verdict-container {
   margin-top: 15px;
   padding: 10px 15px;
@@ -319,9 +320,27 @@
   border-left-color: #f44336;
 }
 
+.wrong-answer p.font-medium {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.wrong-answer strong {
+  color: #d32f2f;
+}
+
 .compilation-error {
-  background-color: rgba(255, 152, 0, 0.1);
-  border-left-color: #ff9800;
+  background-color: rgba(255, 193, 7, 0.15);
+  border-left-color: #ffc107;
+}
+
+.compilation-error p.font-medium {
+  color: #ff8f00;
+  font-weight: 600;
+}
+
+.compilation-error strong {
+  color: #f57f17;
 }
 
 .time-limit-exceeded {
@@ -421,3 +440,6 @@
 .input-output button.debug-btn:hover {
   background: #f57c00;
 }
+
+
+

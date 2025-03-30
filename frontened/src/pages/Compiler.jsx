@@ -20,6 +20,7 @@ int main() {
   const [verdict, setVerdict] = useState(null);
   const [language, setLanguage] = useState('cpp');
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [executionTime, setExecutionTime] = useState(0);
   const inputRef = useRef(null);
   const navigate = useNavigate();
@@ -152,95 +153,129 @@ if __name__ == "__main__":
     textarea.style.height = `${textarea.scrollHeight}px`;
   };
 
-  // Update the handleFinal function to correctly handle the verdict
+  // Update the submitCode function to not include authentication
   const handleFinal = async () => {
+    setIsSubmitting(true);
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      setVerdict(null);
+      // Change from verdict endpoint to submit endpoint
+      const submitUrl = `${url_3}/submit`;
+      console.log("Calling submit endpoint:", submitUrl);
       
-      // Get the token from localStorage
-      const token = localStorage.getItem("token");
-      
-      // Use the environment variable with the correct URL
-      const verdictUrl = `${url_3}/verdict/${problem._id}`;
-      console.log("Calling verdict endpoint:", verdictUrl);
-      console.log("Token available:", !!token);
-      
-      // First check if the server is reachable
-      try {
-        await axios.get(`${url_3}/health`);
-      } catch (connectionError) {
-        throw new Error("Cannot connect to the code execution server. Please check your connection and try again.");
-      }
-      
-      // Remove the Authorization header for now
       const response = await axios.post(
-        verdictUrl,
+        submitUrl,
         {
           language: language,
           code: code,
+          problemId: problem?._id || 'development',
+          problemTitle: problem?.title || 'Development Problem'
         }
-        // Remove the headers object completely
       );
       
       console.log("Submission response:", response.data);
       
-      if (response.data.success && response.data.result) {
-        // Extract the verdict from the response
-        const verdictData = response.data.result.verdict;
-        console.log("Verdict data:", verdictData);
+      if (response.data.success) {
+        const receivedVerdict = response.data.result?.verdict || { status: "Processing" };
+        setVerdict(receivedVerdict);
         
-        // Set the verdict state
-        setVerdict(verdictData);
-        console.log("Setting verdict to:", verdictData);
-        
-        // Set hasSubmitted to true
+        // Set hasSubmitted to true on successful submission
         setHasSubmitted(true);
         
-        // Set a flag to refresh submissions on the result page
-        localStorage.setItem('refreshSubmissions', 'true');
-        
-        // Check if the submissions server is reachable before redirecting
-        try {
-          // Update this URL to match the correct port for your submissions service
-          const submissionsUrl = `${url_3}/health`;
-          await axios.get(submissionsUrl);
-          
-          // Only navigate if the submissions server is reachable
-          setTimeout(() => {
-            navigate('/result');
-          }, 5);
-        } catch (error) {
-          console.log("Submissions server not reachable, showing verdict on this page");
-          toast.success("Submission successful! Verdict is shown below.");
-          // Display the verdict on this page instead
+        if (response.data.warning) {
+          toast.warning(response.data.warning);
         }
+        
+        toast.success("Solution submitted successfully!");
       } else {
-        const errorVerdict = {
-          status: "Error",
-          message: response.data.error || "Unknown error",
-          results: []
-        };
-        setVerdict(errorVerdict);
-        console.log("Setting error verdict:", errorVerdict);
+        setVerdict({ 
+          status: "Error", 
+          message: response.data.error || "Unknown error occurred" 
+        });
       }
     } catch (error) {
       console.error("Error submitting solution:", error);
-      const errorVerdict = {
+      console.error("Error details:", error.response?.data || "No response data");
+      
+      // If we're in development mode, create a mock verdict
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Creating mock verdict for development due to error");
+        
+        const mockVerdict = {
+          status: "Wrong Answer",
+          message: "Development mode: Mock verdict provided due to error.",
+          time: 100,
+          memory: 5000,
+          results: [
+            {
+              status: "Wrong Answer",
+              input: "",
+              expectedOutput: "Hello World",
+              actualOutput: "Different output",
+              time: 100,
+              memory: 5000
+            }
+          ]
+        };
+        
+        setVerdict(mockVerdict);
+        toast.warning("Development mode: Using mock verdict due to error.");
+        setHasSubmitted(true);
+        
+        // Save mock submission to localStorage for history
+        const submissionHistory = JSON.parse(localStorage.getItem('submissionHistory') || '[]');
+        const newSubmission = {
+          id: Date.now(),
+          problemId: problem?._id || 'development',
+          problemTitle: problem?.title || 'Development Problem',
+          language: language,
+          code: code,
+          verdict: mockVerdict.status,
+          timestamp: new Date().toISOString(),
+        };
+        
+        submissionHistory.push(newSubmission);
+        localStorage.setItem('submissionHistory', JSON.stringify(submissionHistory));
+        
+        return;
+      }
+      
+      setVerdict({
         status: "Error",
-        message: error.message || "Network error. Please check your connection.",
-        results: []
-      };
-      setVerdict(errorVerdict);
-      toast.error(error.message || "Network error. Please check your connection.");
+        message: error.response?.data?.error || error.message || "Unknown error occurred"
+      });
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   useEffect(() => {
     autoResizeTextarea(inputRef.current);
   }, [input]);
+
+  // Update the getVerdictStatus function to better detect compilation errors
+  const getVerdictStatus = () => {
+    if (!verdict) return '';
+    
+    // If we have results, determine status based on all test cases
+    if (verdict.results && verdict.results.length > 0) {
+      const allPassed = verdict.results.every(r => 
+        r.status === 'Accepted' || r.passed === true
+      );
+      return allPassed ? 'accepted' : 'wrong-answer';
+    }
+    
+    if (typeof verdict.status === 'string') {
+      const status = verdict.status.toLowerCase();
+      if (status.includes('compilation') || status.includes('compiler')) return 'compilation-error';
+      if (status.includes('wrong')) return 'wrong-answer';
+      if (status.includes('accept')) return 'accepted';
+      if (status.includes('time limit')) return 'time-limit-exceeded';
+      if (status.includes('error')) return 'error';
+    }
+    return '';
+  };
 
   return (
     <div className="compiler-page">
@@ -299,28 +334,7 @@ if __name__ == "__main__":
           />
           <div className="button-group">
             <button className="submit-btn" onClick={handleFinal}>Submit Solution</button>
-            <button 
-              className="debug-btn" 
-              onClick={async () => {
-                try {
-                  const debugUrl = `${url_3}/debug-execution/${problem?._id}`;
-                  toast.loading("Debugging execution...", { id: "debug" });
-                  const response = await axios.post(debugUrl, {
-                    language: language,
-                    code: code
-                  });
-                  toast.dismiss("debug");
-                  console.log("Debug results:", response.data);
-                  toast.success("Debug info logged to console", { duration: 3000 });
-                } catch (error) {
-                  toast.dismiss("debug");
-                  toast.error(`Debug error: ${error.message}`, { duration: 3000 });
-                  console.error("Debug error:", error);
-                }
-              }}
-            >
-              Debug Execution
-            </button>
+            
             {hasSubmitted && (
               <button 
                 className="submissions-btn"
@@ -331,10 +345,14 @@ if __name__ == "__main__":
             )}
           </div>
           {verdict && (
-            <div className={`verdict-container ${verdict.status.toLowerCase().replace(/\s+/g, '-')}`}>
-              <h3>Verdict: {verdict.status}</h3>
-              <p>{verdict.message}</p>
-              {verdict.details && <p className="verdict-details">{verdict.details}</p>}
+            <div className="verdict-container">
+              <h3>Verdict</h3>
+              <div className={`verdict-details ${getVerdictStatus()}`}>
+                <p className="font-medium"><strong>Status:</strong> {verdict.status || 'Processing'}</p>
+                {verdict.message && <p><strong>Message:</strong> {verdict.message}</p>}
+                {verdict.time && <p><strong>Time:</strong> {verdict.time} ms</p>}
+                {verdict.memory && <p><strong>Memory:</strong> {verdict.memory} KB</p>}
+              </div>
             </div>
           )}
         </div>
@@ -344,25 +362,3 @@ if __name__ == "__main__":
 }
 
 export default Compiler;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
