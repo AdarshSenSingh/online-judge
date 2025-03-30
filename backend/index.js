@@ -7,8 +7,8 @@ const router = require('./router/auth_router');
 const dbConnection = require("./database/db");
 
 // Debug log to check environment variables
-console.log("MongoDB URI:", process.env.MONGODB_URI ? "URI is defined" : "URI is undefined");
-console.log("JWT Secret:", process.env.JWT_SECRET_KEY ? "Secret is defined" : "Secret is undefined");
+// console.log("MongoDB URI:", process.env.MONGODB_URI ? "URI is defined" : "URI is undefined");
+// console.log("JWT Secret:", process.env.JWT_SECRET_KEY ? "Secret is defined" : "Secret is undefined");
 
 // Middleware
 const corsOption = {

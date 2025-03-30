@@ -10,9 +10,9 @@ import addTestProblem from "./testData.js"; // Import the test data function
 dotenv.config();
 
 // Debug logs
-console.log("Environment variables loaded");
-console.log("MONGOURL:", process.env.MONGOURL ? "Defined" : "Undefined");
-console.log("PORT:", process.env.PORT);
+// console.log("Environment variables loaded");
+// console.log("MONGOURL:", process.env.MONGOURL ? "Defined" : "Undefined");
+// console.log("PORT:", process.env.PORT);
 
 const app = express();
 app.use(cors({

@@ -54,15 +54,8 @@ const defaultCrudUrl = isDevelopment
 const CRUD_URL = process.env.CRUD_URL || process.env.BACKEND_2_URL || 'http://localhost:2000';
 
 // Add this near the top of your file to log the CRUD URL on startup
-console.log(`Using CRUD URL: ${CRUD_URL}`);
+// console.log(`Using CRUD URL: ${CRUD_URL}`);
 
-console.log('Environment variables:');
-console.log('- NODE_ENV:', process.env.NODE_ENV);
-console.log('- Environment mode:', isDevelopment ? 'development' : 'production');
-console.log('- PORT:', process.env.PORT);
-console.log('- CRUD_URL:', CRUD_URL);
-console.log('- MONGODB_URI:', process.env.MONGODB_URI ? 'Set (hidden)' : 'Not set');
-console.log('- JWT_SECRET:', process.env.JWT_SECRET ? 'Set (hidden)' : 'Not set');
 
 // Validate critical environment variables
 if (!process.env.CRUD_URL) {
@@ -83,7 +76,7 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.CORS_ORIGIN === '*') {
       callback(null, true);
     } else {
-      console.log(`CORS blocked for origin: ${origin}`);
+      // console.log(`CORS blocked for origin: ${origin}`);
       callback(null, true); // Allow all origins in development
     }
   },
@@ -164,7 +157,7 @@ if (!skipRedis) {
 const connectToMongoDB = async () => {
   try {
     console.log('Attempting to connect to MongoDB for Compiler service...');
-    console.log('MongoDB URI:', process.env.MONGODB_URI ? 'URI is defined' : 'URI is not defined');
+    // console.log('MongoDB URI:', process.env.MONGODB_URI ? 'URI is defined' : 'URI is not defined');
     
     await mongoose.connect(process.env.MONGODB_URI);
     
@@ -179,7 +172,7 @@ const connectToMongoDB = async () => {
 // Add job to queue
 const addJobToRunnerQueue = async (code, language, input, problemId) => {
   if (!redisAvailable) {
-    console.log('Redis not available, processing job directly');
+    // console.log('Redis not available, processing job directly');
     // Process the job directly instead of using a queue
     try {
       const filePath = await generateFile(language, code);
@@ -223,12 +216,12 @@ const addJobToRunnerQueue = async (code, language, input, problemId) => {
 // Add submission to queue
 const addJobToSubmissionQueue = async (code, language, problemId, userId, submissionId) => {
   if (!redisAvailable) {
-    console.log('Redis not available, processing submission directly');
+    // console.log('Redis not available, processing submission directly');
     // Process the submission directly
     try {
       // Get verdict for the submission
       const verdictResult = await getVerdict(problemId, code, language, submissionId);
-      console.log(`Direct processing result for submission ${submissionId}:`, verdictResult);
+      // console.log(`Direct processing result for submission ${submissionId}:`, verdictResult);
       return verdictResult;
     } catch (error) {
       console.error(`Error in direct processing for submission ${submissionId}:`, error);
@@ -297,23 +290,23 @@ const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('No token provided or invalid format');
+      // console.log('No token provided or invalid format');
       return res.status(401).json({ error: 'No token provided or invalid format' });
     }
     
     const token = authHeader.split(' ')[1];
-    console.log('Token received:', token.substring(0, 10) + '...');
+    // console.log('Token received:', token.substring(0, 10) + '...');
     
     // Use the correct secret key
     const secret = process.env.JWT_SECRET || process.env.JWT_SECRET_KEY || 'your_jwt_secret';
-    console.log('Using secret key:', secret ? 'Secret is defined' : 'Secret is not defined');
+    // console.log('Using secret key:', secret ? 'Secret is defined' : 'Secret is not defined');
     
     const decoded = jwt.verify(token, secret);
-    console.log('Token decoded successfully:', decoded);
+    // console.log('Token decoded successfully:', decoded);
     
     // Set userId from the decoded token
     req.userId = decoded.userId || decoded._id || decoded.id;
-    console.log('User ID set in request:', req.userId);
+    // console.log('User ID set in request:', req.userId);
     
     next();
   } catch (error) {
@@ -329,7 +322,7 @@ app.get('/', (req, res) => {
 
 // Route to execute code
 app.post('/run', async (req, res) => {
-  console.log('Received /run request:', req.body);
+  // console.log('Received /run request:', req.body);
   
   try {
     const { language = 'cpp', code, input = '' } = req.body;
@@ -474,23 +467,23 @@ app.get("/debug-submissions/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     
-    console.log(`Debugging submissions for userId: ${userId}`);
-    console.log(`userId type: ${typeof userId}`);
+    // console.log(`Debugging submissions for userId: ${userId}`);
+    // console.log(`userId type: ${typeof userId}`);
     
     // Count total submissions in the database
     const totalCount = await Submission.countDocuments();
-    console.log(`Total submissions in database: ${totalCount}`);
+    // console.log(`Total submissions in database: ${totalCount}`);
     
     // Count submissions for this user
     const userCount = await Submission.countDocuments({ userId });
-    console.log(`Total submissions for user ${userId}: ${userCount}`);
+    // console.log(`Total submissions for user ${userId}: ${userCount}`);
     
     // Get a sample of submissions to check userId format
     const sampleSubmissions = await Submission.find().limit(5);
     if (sampleSubmissions.length > 0) {
-      console.log('Sample submission userIds:');
+      // console.log('Sample submission userIds:');
       sampleSubmissions.forEach(sub => {
-        console.log(`- ${sub.userId} (type: ${typeof sub.userId})`);
+        // console.log(`- ${sub.userId} (type: ${typeof sub.userId})`);
       });
     }
     
@@ -651,7 +644,7 @@ const executeCode = async (language, code, input) => {
 app.post('/submit', async (req, res) => {
   const { language = 'cpp', code, problemId, problemTitle = 'Unknown Problem' } = req.body;
   
-  console.log(`[DEBUG] Submit request received: problemId=${problemId}, language=${language}`);
+  // console.log(`[DEBUG] Submit request received: problemId=${problemId}, language=${language}`);
   
   if (!code) {
     return res.status(400).json({ error: 'Code is required' });
@@ -676,14 +669,14 @@ app.post('/submit', async (req, res) => {
     
     // Save the submission
     const savedSubmission = await submission.save();
-    console.log(`[DEBUG] Submission saved with ID: ${savedSubmission._id}`);
+    // console.log(`[DEBUG] Submission saved with ID: ${savedSubmission._id}`);
     
     // Process the submission
     let result;
     try {
       // Get verdict for the submission
       result = await getVerdict(problemId, code, language, savedSubmission._id);
-      console.log(`[DEBUG] Verdict result:`, result);
+      // console.log(`[DEBUG] Verdict result:`, result);
       
       // Update the submission with the verdict result
       await Submission.findByIdAndUpdate(savedSubmission._id, {
@@ -692,7 +685,7 @@ app.post('/submit', async (req, res) => {
         completedAt: new Date()
       });
       
-      console.log(`[DEBUG] Submission updated with verdict`);
+      // console.log(`[DEBUG] Submission updated with verdict`);
     } catch (verdictError) {
       console.error(`[ERROR] Error getting verdict:`, verdictError);
       result = { 
@@ -718,11 +711,11 @@ app.post('/submit', async (req, res) => {
 // Route to get all submissions - no authentication required
 app.get('/submissions', async (req, res) => {
   try {
-    console.log(`[DEBUG] Fetching all submissions`);
+    // console.log(`[DEBUG] Fetching all submissions`);
     
     // Get all submissions, sorted by newest first
     const submissions = await Submission.find().sort({ submittedAt: -1 }).limit(100);
-    console.log(`[DEBUG] Found ${submissions.length} submissions`);
+    // console.log(`[DEBUG] Found ${submissions.length} submissions`);
     
     // Return the submissions
     res.json({
@@ -758,7 +751,7 @@ app.get('/debug-redis', async (req, res) => {
 
 // Add a mock problem handler for development
 const getMockProblem = (problemId) => {
-  console.log(`Creating mock problem for ID: ${problemId}`);
+  // console.log(`Creating mock problem for ID: ${problemId}`);
   return {
     _id: problemId,
     title: "Mock Problem",
@@ -779,7 +772,7 @@ app.post('/verdict/:problemId', async (req, res) => {
     const { problemId } = req.params;
     const { language, code } = req.body;
     
-    console.log(`Processing verdict request for problem: ${problemId}`);
+    // console.log(`Processing verdict request for problem: ${problemId}`);
     
     // Validate required fields
     if (!code) {
@@ -801,7 +794,7 @@ app.post('/verdict/:problemId', async (req, res) => {
     
     if (isDevelopmentMode) {
       try {
-        console.log("Running in development mode, using simplified verdict process");
+        // console.log("Running in development mode, using simplified verdict process");
         
         // Create a simple verdict based on the code
         const output = await runCode(language, code, "");
@@ -945,7 +938,7 @@ app.post('/test/create-submission', async (req, res) => {
     
     // Save the submission
     const savedSubmission = await submission.save();
-    console.log(`[TEST] Created test submission: ${savedSubmission._id}`);
+    // console.log(`[TEST] Created test submission: ${savedSubmission._id}`);
     
     // Return the saved submission
     res.json({
@@ -963,7 +956,7 @@ app.get('/test/all-submissions', async (req, res) => {
   try {
     // Get all submissions in the database
     const submissions = await Submission.find({});
-    console.log(`[TEST] Found ${submissions.length} total submissions in database`);
+    // console.log(`[TEST] Found ${submissions.length} total submissions in database`);
     
     // Return all submissions
     res.json({
@@ -1018,10 +1011,10 @@ app.get('/submission/:id', async (req, res) => {
 app.get('/debug/test-cases/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`Checking test cases for problem ID: ${id}`);
+    // console.log(`Checking test cases for problem ID: ${id}`);
     
     // Try to fetch the problem from the CRUD service
-    console.log(`Using CRUD URL: ${CRUD_URL}`);
+    // console.log(`Using CRUD URL: ${CRUD_URL}`);
     const response = await axios.get(`${CRUD_URL}/crud/getOne/${id}`);
     
     if (!response.data) {
@@ -1053,7 +1046,7 @@ app.get('/debug/test-cases/:id', async (req, res) => {
 app.get('/test-cases/:problemId', async (req, res) => {
   try {
     const { problemId } = req.params;
-    console.log(`Manual test case verification for problem: ${problemId}`);
+    // console.log(`Manual test case verification for problem: ${problemId}`);
     
     // Try multiple possible CRUD URLs
     const possibleUrls = [
@@ -1067,7 +1060,7 @@ app.get('/test-cases/:problemId', async (req, res) => {
     
     for (const baseUrl of possibleUrls) {
       try {
-        console.log(`Trying CRUD endpoint: ${baseUrl}/crud/getOne/${problemId}`);
+        // console.log(`Trying CRUD endpoint: ${baseUrl}/crud/getOne/${problemId}`);
         const response = await axios.get(`${baseUrl}/crud/getOne/${problemId}`, {
           timeout: 3000
         });

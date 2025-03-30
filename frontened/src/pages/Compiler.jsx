@@ -78,11 +78,11 @@ if __name__ == "__main__":
 
   useEffect(() => {
     // Log the environment variables to verify they're loaded correctly
-    console.log("Backend URLs:", {
-      backend: import.meta.env.VITE_BACKEND_URL,
-      backend2: import.meta.env.VITE_BACKEND_2_URL,
-      backend3: import.meta.env.VITE_BACKEND_3_URL
-    });
+    // console.log("Backend URLs:", {
+    //   backend: import.meta.env.VITE_BACKEND_URL,
+    //   backend2: import.meta.env.VITE_BACKEND_2_URL,
+    //   backend3: import.meta.env.VITE_BACKEND_3_URL
+    // });
     
     // Check if backend is accessible
     const checkBackendConnection = async () => {
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     setOutput("");
     
     try {
-      console.log("Submitting payload:", { language, code, input });
+      // console.log("Submitting payload:", { language, code, input });
       
       // Use the /run endpoint
       const response = await axios.post(`${url_3}/run`, {
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         input
       });
       
-      console.log("Response:", response.data);
+      // console.log("Response:", response.data);
       
       if (response.data.success) {
         setOutput(response.data.output);
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     try {
       // Change from verdict endpoint to submit endpoint
       const submitUrl = `${url_3}/submit`;
-      console.log("Calling submit endpoint:", submitUrl);
+      // console.log("Calling submit endpoint:", submitUrl);
       
       const response = await axios.post(
         submitUrl,
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         }
       );
       
-      console.log("Submission response:", response.data);
+      // console.log("Submission response:", response.data);
       
       if (response.data.success) {
         const receivedVerdict = response.data.result?.verdict || { status: "Processing" };
