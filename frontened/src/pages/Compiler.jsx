@@ -30,6 +30,22 @@ int main() {
   // Add a new state to track if a submission has been made
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
+  // Add state for showing test case details
+  const [showTestCaseDetails, setShowTestCaseDetails] = useState(false);
+  const [selectedTestCase, setSelectedTestCase] = useState(null);
+
+  // Add a function to show test case details
+  const showFailedTestCase = () => {
+    if (verdict && verdict.results && verdict.results.length > 0) {
+      // Find the first failed test case
+      const failedCase = verdict.results.find(r => !r.passed);
+      if (failedCase) {
+        setSelectedTestCase(failedCase);
+        setShowTestCaseDetails(true);
+      }
+    }
+  };
+
   // Add a template for Python code
   const codeTemplates = {
     cpp: `#include <iostream>
@@ -349,10 +365,49 @@ if __name__ == "__main__":
               <h3>Verdict</h3>
               <div className={`verdict-details ${getVerdictStatus()}`}>
                 <p className="font-medium"><strong>Status:</strong> {verdict.status || 'Processing'}</p>
-                {verdict.message && <p><strong>Message:</strong> {verdict.message}</p>}
+                {/* {verdict.message && <p><strong>Message:</strong> {verdict.message}</p>} */}
                 {verdict.time && <p><strong>Time:</strong> {verdict.time} ms</p>}
                 {verdict.memory && <p><strong>Memory:</strong> {verdict.memory} KB</p>}
+                
+                {/* Add button to show test case details if there's a failed test case */}
+                {verdict.status !== 'Accepted' && verdict.results && verdict.results.some(r => !r.passed) && (
+                  <button 
+                    className="view-testcase-btn" 
+                    onClick={showFailedTestCase}
+                  >
+                    View Failed Test Case
+                  </button>
+                )}
               </div>
+              
+              {/* Test case details modal/section */}
+              {showTestCaseDetails && selectedTestCase && (
+                <div className="test-case-details">
+                  <div className="test-case-header">
+                    <h4>Failed Test Case Details</h4>
+                    <button 
+                      className="close-btn"
+                      onClick={() => setShowTestCaseDetails(false)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="test-case-content">
+                    <div className="test-case-section">
+                      <h5>Input:</h5>
+                      <pre>{selectedTestCase.input}</pre>
+                    </div>
+                    <div className="test-case-section">
+                      <h5>Expected Output:</h5>
+                      <pre>{selectedTestCase.expectedOutput}</pre>
+                    </div>
+                    <div className="test-case-section">
+                      <h5>Your Output:</h5>
+                      <pre>{selectedTestCase.actualOutput}</pre>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -362,3 +417,6 @@ if __name__ == "__main__":
 }
 
 export default Compiler;
+
+
+
