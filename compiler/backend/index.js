@@ -59,30 +59,24 @@ app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-
-    // Add your Vercel domain explicitly
+    
+    // Include your actual deployed URL
     const allowedOrigins = [
-      process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app',
+      ...ALLOWED_ORIGINS,
       'https://online-judge-sandy.vercel.app',
-      'http://localhost:5173',
-      'http://localhost:3000'
+      'https://online-judge-compiler-9z3d.onrender.com'
     ];
-
-    console.log(`CORS request from origin: ${origin}`);
-
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development' || process.env.CORS_ORIGIN === '*') {
+    
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       console.log(`CORS blocked for origin: ${origin}`);
-      // Allow all origins in development or when troubleshooting
-      callback(null, true);
+      callback(new Error('Not allowed by CORS'));
     }
-},
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  credentials: true
 }));
 
 // Add explicit handling for OPTIONS requests
@@ -97,7 +91,7 @@ app.options('*', cors());
 // });
 
 // Handle OPTIONS requests explicitly
-app.options('*', cors(corsOptions));
+// app.options('*', cors(corsOptions));
 
 // Add a middleware to ensure CORS headers are set for all responses
 app.use((req, res, next) => {
@@ -329,6 +323,20 @@ const verifyToken = (req, res, next) => {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
+
+// Add before your routes
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://online-judge-sandy.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 // Define routes
 app.get('/', (req, res) => {
