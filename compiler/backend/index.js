@@ -80,8 +80,10 @@ app.use(cors({
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
-  credentials: true
-}));
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
 
 // Add explicit handling for OPTIONS requests
 app.options('*', cors());
@@ -94,8 +96,18 @@ app.options('*', cors());
 //   next();
 // });
 
-// Add explicit handling for OPTIONS requests
-// app.options('*', cors(corsOptions));
+// Handle OPTIONS requests explicitly
+app.options('*', cors(corsOptions));
+
+// Add a middleware to ensure CORS headers are set for all responses
+app.use((req, res, next) => {
+  // Set CORS headers for all responses
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Add a middleware to log all requests for debugging
 app.use((req, res, next) => {
@@ -643,6 +655,20 @@ const executeCode = async (language, code, input) => {
   }
 };
 
+// Helper function to run code (used in verdict endpoint)
+const runCode = async (language, code, input) => {
+  try {
+    const result = await executeCode(language, code, input);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    return result.output || '';
+  } catch (error) {
+    console.error('Error running code:', error);
+    throw error;
+  }
+};
+
 // Route to submit a solution - modified to not require authentication
 app.post('/submit', async (req, res) => {
   const { language = 'cpp', code, problemId, problemTitle = 'Unknown Problem' } = req.body;
@@ -732,6 +758,11 @@ app.get('/submissions', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Function to check Redis availability
+const checkRedisAvailability = async () => {
+  return redisAvailable;
+};
 
 // Add this endpoint for debugging Redis connection
 app.get('/debug-redis', async (req, res) => {
@@ -888,18 +919,29 @@ app.post('/verdict/:problemId', async (req, res) => {
   }
 });
 
-// Add a health check endpoint
+// Add a health check endpoint with explicit CORS headers
 app.get('/health', (req, res) => {
   // Don't set explicit CORS headers - let the global CORS middleware handle it
 
   res.json({
     status: 'ok',
+    service: 'compiler',
     jwtSecretConfigured: !!process.env.JWT_SECRET_KEY,
     mongodbConnected: mongoose.connection.readyState === 1,
     redisAvailable,
     environment: process.env.NODE_ENV || 'production',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    allowedOrigins: ALLOWED_ORIGINS
   });
+});
+
+// Add an OPTIONS handler for the health endpoint
+app.options('/health', (req, res) => {
+  // Explicitly set CORS headers for preflight
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204);
 });
 
 // Debug route to check submission model
@@ -1096,13 +1138,48 @@ app.get('/test-cases/:problemId', async (req, res) => {
   }
 });
 
-// Add a simple test endpoint for CORS
+// Add a simple test endpoint for CORS - with explicit headers
 app.get('/test-cors', (req, res) => {
   // Don't set explicit CORS headers - let the global CORS middleware handle it
 
   res.json({
     message: 'CORS test successful',
     origin: req.headers.origin || 'No origin',
+    allowedOrigins: ALLOWED_ORIGINS,
+    corsEnabled: true,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Add a very simple endpoint that just returns text
+app.get('/simple-test', (req, res) => {
+  // Explicitly set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+
+  // Just return plain text
+  res.type('text/plain').send('Simple test endpoint is working');
+});
+
+// Add a specific endpoint for preflight testing
+app.options('/test-cors-preflight', (req, res) => {
+  // Explicitly set CORS headers for preflight
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204);
+});
+
+app.post('/test-cors-preflight', (req, res) => {
+  // Explicitly set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'POST');
+
+  res.json({
+    message: 'CORS preflight test successful',
+    origin: req.headers.origin || 'No origin',
+    method: req.method,
+    headers: req.headers,
     timestamp: new Date().toISOString()
   });
 });

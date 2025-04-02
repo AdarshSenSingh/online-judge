@@ -13,3 +13,6 @@ services:
         value: TRUE
       - key: CORS_ORIGIN
         value: https://online-judge-sandy.vercel.app
+      - key: NODE_ENV
+        value: production
+

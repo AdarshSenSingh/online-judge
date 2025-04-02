@@ -19,11 +19,11 @@ import Problem from "../models/ProblemSchema.js"
         console.log("Fetching all problems");
         const problemData = await Problem.find();
         console.log(`Found ${problemData ? problemData.length : 0} problems`);
-        
+
         if (!problemData || problemData.length === 0) {
             return res.status(404).send({ msg: "No problems found in database" });
         }
-        
+
         res.status(200).json(problemData);
     } catch (error) {
         console.error("Error in getAll:", error);
@@ -32,17 +32,37 @@ import Problem from "../models/ProblemSchema.js"
 };
 
  // to fetch single problem
- export const getOne =async(req,res)=>{
+ export const getOne = async(req, res) => {
     try {
-        const id= req.params.id;
-        const ProblemExits= await Problem.findById(id);
-        if(!ProblemExits){
-            return res.status(404).send({msg:"Problem with given id is not found"});
+        // Set CORS headers specifically for this endpoint
+        const origin = req.headers.origin;
+        res.header('Access-Control-Allow-Origin', origin || '*');
+        res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.header('Access-Control-Allow-Credentials', 'true');
+
+        // Handle preflight OPTIONS request
+        if (req.method === 'OPTIONS') {
+            return res.status(204).end();
         }
-        res.status(200).json(ProblemExits);
+
+        const id = req.params.id;
+        console.log(`Fetching problem with ID: ${id}`);
+
+        const ProblemExits = await Problem.findById(id);
+        if(!ProblemExits) {
+            console.log(`Problem with ID ${id} not found`);
+            return res.status(404).json({msg: "Problem with given id is not found"});
+        }
+
+        console.log(`Successfully found problem: ${ProblemExits.title}`);
+        return res.status(200).json(ProblemExits);
     } catch (error) {
-        return res.status(500).json({ msg: 'Error in fetching the single data in crud' });
-        
+        console.error(`Error fetching problem: ${error.message}`);
+        return res.status(500).json({
+            msg: 'Error in fetching the single data in crud',
+            error: error.message
+        });
     }
  };
 

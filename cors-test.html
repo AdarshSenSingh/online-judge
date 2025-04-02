@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORS Test Tool</h1>
+    <p>Use this tool to test CORS configuration for your backend services.</p>
+    
+    <div>
+        <h2>Compiler Backend Tests</h2>
+        <button onclick="testEndpoint('https://online-judge-compiler-9z3d.onrender.com/health')">Test /health</button>
+        <button onclick="testEndpoint('https://online-judge-compiler-9z3d.onrender.com/simple-test')">Test /simple-test</button>
+        <button onclick="testEndpoint('https://online-judge-compiler-9z3d.onrender.com/test-cors')">Test /test-cors</button>
+        <button onclick="testOptionsEndpoint('https://online-judge-compiler-9z3d.onrender.com/health')">Test OPTIONS /health</button>
+    </div>
+    
+    <div>
+        <h2>CRUD Backend Tests</h2>
+        <button onclick="testEndpoint('https://online-judge-crud.onrender.com/crud/getAll')">Test /crud/getAll</button>
+    </div>
+    
+    <h2>Results:</h2>
+    <pre id="results"></pre>
+    
+    <script>
+        const resultsElement = document.getElementById('results');
+        
+        function appendResult(message, isError = false) {
+            const className = isError ? 'error' : 'success';
+            resultsElement.innerHTML += `<div class="${className}">${new Date().toISOString()} - ${message}</div>\n`;
+        }
+        
+        async function testEndpoint(url) {
+            appendResult(`Testing GET request to ${url}...`);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.text();
+                
+                appendResult(`Status: ${response.status}`);
+                appendResult(`Headers: ${JSON.stringify([...response.headers].reduce((obj, [key, value]) => {
+                    obj[key] = value;
+                    return obj;
+                }, {}), null, 2)}`);
+                appendResult(`Response: ${data}`);
+            } catch (error) {
+                appendResult(`Error: ${error.message}`, true);
+            }
+        }
+        
+        async function testOptionsEndpoint(url) {
+            appendResult(`Testing OPTIONS request to ${url}...`);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type',
+                        'Origin': window.location.origin
+                    }
+                });
+                
+                appendResult(`Status: ${response.status}`);
+                appendResult(`Headers: ${JSON.stringify([...response.headers].reduce((obj, [key, value]) => {
+                    obj[key] = value;
+                    return obj;
+                }, {}), null, 2)}`);
+            } catch (error) {
+                appendResult(`Error: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -13,8 +13,11 @@ export const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://online-judge-sandy.vercel.app',
-  // Add your Vercel domain explicitly
-  'https://online-judge-sandy.vercel.app'
+  'https://online-judge.vercel.app',
+  'https://online-judge-git-main-adarshsensingh.vercel.app',
+  'https://online-judge-adarshsensingh.vercel.app',
+  // Add any additional Vercel preview domains here
+  process.env.CORS_ORIGIN || 'https://online-judge-sandy.vercel.app'
 ];
 
 // Other configuration values
@@ -28,6 +31,7 @@ console.log(`- Environment: ${process.env.NODE_ENV || 'not set'}`);
 console.log(`- Frontend URL: ${FRONTEND_URL}`);
 console.log(`- CRUD URL: ${CRUD_URL}`);
 console.log(`- AUTH URL: ${AUTH_URL}`);
+
 
 
 
