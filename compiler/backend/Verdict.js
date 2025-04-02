@@ -11,7 +11,7 @@ import { executePython } from './executePython.js';
 import { CRUD_URL } from './config.js';
 
 // Define timeLimit if it's not already defined
-const timeLimit = 5; // 5 seconds time limit
+const timeLimit = 10; // Increase from 5 to 10 seconds time limit
 
 // Helper function to normalize output for comparison
 const normalize = (output) => {

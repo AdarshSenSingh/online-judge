@@ -13,7 +13,7 @@ export const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://online-judge-sandy.vercel.app',
-  'https://online-judge-compiler-9z3d.onrender.com'
+  'https://online-judge-compiler-tzuv.onrender.com'
 ];
 
 // Other configuration values

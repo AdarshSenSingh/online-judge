@@ -56,24 +56,7 @@ const connectToMongoDB = async () => {
 const app = express();
 // Configure CORS with specific settings
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Include your actual deployed URL
-    const allowedOrigins = [
-      ...ALLOWED_ORIGINS,
-      'https://online-judge-sandy.vercel.app',
-      'https://online-judge-compiler-9z3d.onrender.com'
-    ];
-    
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      console.log(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: 'https://online-judge-sandy.vercel.app',
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
   credentials: true

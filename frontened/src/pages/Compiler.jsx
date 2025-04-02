@@ -25,7 +25,7 @@ int main() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const url_2 = `${import.meta.env.VITE_BACKEND_2_URL}/crud`;
-  const url_3 = `${import.meta.env.VITE_BACKEND_3_URL}`;
+  const url_3 = import.meta.env.VITE_BACKEND_3_URL;
 
   // Add a new state to track if a submission has been made
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -433,6 +433,7 @@ if __name__ == "__main__":
 }
 
 export default Compiler;
+
 
 
 
