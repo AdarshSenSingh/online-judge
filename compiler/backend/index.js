@@ -591,7 +591,7 @@ const executeCode = async (language, code, input) => {
     const dirPath = path.join(os.tmpdir(), `code-${Date.now()}`);
     await fs.mkdir(dirPath, { recursive: true });
 
-    let fileName, command;
+    let fileName;
 
     // Set up file and command based on language
     if (language === 'cpp') {
@@ -629,6 +629,20 @@ const executeCode = async (language, code, input) => {
   } catch (error) {
     console.error('Execution error:', error);
     return { error: error.message };
+  }
+};
+
+// Helper function to run code (used in verdict endpoint)
+const runCode = async (language, code, input) => {
+  try {
+    const result = await executeCode(language, code, input);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    return result.output || '';
+  } catch (error) {
+    console.error('Error running code:', error);
+    throw error;
   }
 };
 
@@ -721,6 +735,11 @@ app.get('/submissions', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Function to check Redis availability
+const checkRedisAvailability = async () => {
+  return redisAvailable;
+};
 
 // Add this endpoint for debugging Redis connection
 app.get('/debug-redis', async (req, res) => {
@@ -1088,14 +1107,24 @@ app.get('/test-cases/:problemId', async (req, res) => {
 
 // Add a simple test endpoint for CORS
 app.get('/test-cors', (req, res) => {
-  // Explicitly set CORS headers
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
+  // No need to set CORS headers manually - they're handled by the cors middleware
   res.json({
     message: 'CORS test successful',
     origin: req.headers.origin || 'No origin',
+    allowedOrigins: ALLOWED_ORIGINS,
+    corsEnabled: true,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Add a specific endpoint for preflight testing
+app.options('/test-cors-preflight', cors(corsOptions));
+app.post('/test-cors-preflight', (req, res) => {
+  res.json({
+    message: 'CORS preflight test successful',
+    origin: req.headers.origin || 'No origin',
+    method: req.method,
+    headers: req.headers,
     timestamp: new Date().toISOString()
   });
 });
