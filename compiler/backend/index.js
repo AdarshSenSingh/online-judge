@@ -77,13 +77,13 @@ app.use(cors({
       // Allow all origins in development or when troubleshooting
       callback(null, true);
     }
-  },
+},
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
   credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 204
-};
+}));
 
 // Add explicit handling for OPTIONS requests
 app.options('*', cors());
