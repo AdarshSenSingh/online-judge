@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: online-judge-compiler
+    env: node
+    buildCommand: cd compiler/backend && npm install
+    startCommand: cd compiler/backend && node index.js
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: FRONTEND_URL
+        value: https://online-judge-sandy.vercel.app
+      - key: SKIP_REDIS
+        value: TRUE
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
+      - path: /*
+        name: Access-Control-Allow-Methods
+        value: "GET, POST, PUT, DELETE, OPTIONS"
+      - path: /*
+        name: Access-Control-Allow-Headers
+        value: "Content-Type, Authorization, Origin, X-Requested-With, Accept"

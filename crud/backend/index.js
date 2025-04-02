@@ -18,9 +18,7 @@ const app = express();
 app.use(cors({
     origin: function(origin, callback) {
         const allowedOrigins = [
-            'https://online-judge-app.vercel.app',
-            'https://online-judge-sandy.vercel.app',
-            'http://localhost:5173'
+            process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app'
         ];
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
@@ -35,7 +33,8 @@ app.use(cors({
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const URL = process.env.MONGOURL || process.env.MONGODB_URI || "mongodb://localhost:27017/online-judge";
+// Use environment variables for MongoDB connection
+const URL = process.env.MONGOURL || process.env.MONGODB_URI;
 const PORT = process.env.PORT || 2000;
 
 // Debug log to check if URL is defined

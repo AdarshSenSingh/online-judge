@@ -12,10 +12,10 @@ const isDocker = process.env.DOCKER_ENV === 'true';
 
 // Configure Redis connection
 const redisConfig = {
-  host: isDocker ? 'redis' : (process.env.REDIS_HOST || 'localhost'),
+  host: isDocker ? 'redis' : (process.env.REDIS_HOST || 'redis-host.example.com'),
   port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: isDocker ? undefined : process.env.REDIS_PASSWORD,
-  tls: !isDocker && process.env.REDIS_TLS === 'true' ? {} : undefined,
+  password: process.env.REDIS_PASSWORD,
+  tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
   maxRetriesPerRequest: 3
 };
 

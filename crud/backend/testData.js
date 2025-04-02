@@ -10,7 +10,8 @@ const addTestProblem = async (existingConnection = null) => {
     try {
         // Only connect if we don't already have a connection
         if (!existingConnection && mongoose.connection.readyState !== 1) {
-            await mongoose.connect(process.env.MONGOURL);
+            const URL = process.env.MONGOURL || process.env.MONGODB_URI;
+            await mongoose.connect(URL);
             needToDisconnect = true;
             console.log("Connected to MongoDB for test data insertion");
         }
@@ -56,3 +57,5 @@ const addTestProblem = async (existingConnection = null) => {
 // Don't run the function automatically when imported
 // Export for use in other files
 export default addTestProblem;
+
+

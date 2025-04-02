@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import './Result.css';
 import { toast } from 'react-hot-toast';
 // Import the environment variable
-const url_3 = import.meta.env.VITE_BACKEND_3_URL || "http://localhost:8000";
+const url_3 = import.meta.env.VITE_BACKEND_3_URL;
 
 const Result = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -142,7 +142,7 @@ const Result = () => {
       try {
         // Try the CRUD backend URL first
         try {
-          const problemsUrl = import.meta.env.VITE_BACKEND_2_URL || 'http://localhost:2000';
+          const problemsUrl = import.meta.env.VITE_BACKEND_2_URL;
           const response = await axios.get(`${problemsUrl}/crud/getAll`);
           const problems = {};
           response.data.forEach(problem => {

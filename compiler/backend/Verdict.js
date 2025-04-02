@@ -31,8 +31,8 @@ const fetchTestCases = async (problemId) => {
   // Try multiple CRUD URLs
   const possibleCrudUrls = [
     CRUD_URL,
-    'http://localhost:2000',
-    process.env.BACKEND_2_URL || 'http://localhost:2000'
+    'https://online-judge-crud.onrender.com',
+    process.env.BACKEND_2_URL || 'https://online-judge-crud.onrender.com'
   ];
   
   while (retries < MAX_RETRIES) {

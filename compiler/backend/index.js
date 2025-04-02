@@ -21,6 +21,7 @@ import { exec } from 'child_process';
 import os from 'os';
 import fs from 'fs/promises';
 import { jobQueue } from './jobQueue.js';
+import { FRONTEND_URL, CRUD_URL, AUTH_URL, ALLOWED_ORIGINS } from './config.js';
 
 // Get the directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -31,60 +32,67 @@ const PORT = process.env.PORT || 8000;
 dotenv.config();
 console.log('Environment variables loaded');
 
-// Check if required environment variables are defined
-if (process.env.JWT_SECRET_KEY) {
-  console.log('JWT_SECRET_KEY: defined');
-} else {
-  console.log('JWT_SECRET_KEY: not defined');
-}
 
-if (process.env.MONGODB_URI) {
-  console.log('MONGODB_URI: defined');
-} else {
-  console.log('MONGODB_URI: not defined');
-}
+// Log the CRUD URL on startup
+console.log(`Using CRUD URL: ${CRUD_URL}`);
 
-// Determine the appropriate CRUD URL based on environment
-const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-const defaultCrudUrl = isDevelopment 
-  ? 'http://localhost:2000' 
-  : 'https://online-judge-crud.onrender.com';
-
-// Set the CRUD URL with proper fallback
-const CRUD_URL = process.env.CRUD_URL || process.env.BACKEND_2_URL || 'http://localhost:2000';
-
-// Add this near the top of your file to log the CRUD URL on startup
-// console.log(`Using CRUD URL: ${CRUD_URL}`);
-
-
-// Validate critical environment variables
-if (!process.env.CRUD_URL) {
-  console.warn('CRUD_URL environment variable not set, using default: http://localhost:2000');
-}
+// MongoDB connection
+const connectToMongoDB = async () => {
+  try {
+    const mongoURI = process.env.MONGODB_URI || process.env.MONGOURL;
+    if (!mongoURI) {
+      console.warn('MongoDB URI not provided in environment variables');
+      return;
+    }
+    
+    await mongoose.connect(mongoURI);
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+  }
+};
 
 // Initialize Express app
 const app = express();
+// Configure CORS with specific settings
 app.use(cors({
   origin: function(origin, callback) {
-    const allowedOrigins = [
-      'https://online-judge-app.vercel.app',
-      'https://online-judge-sandy.vercel.app',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173'
-    ];
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.CORS_ORIGIN === '*') {
+    
+    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
-      // console.log(`CORS blocked for origin: ${origin}`);
-      callback(null, true); // Allow all origins in development
+      console.log(`CORS blocked for origin: ${origin}`);
+      // In production, only allow listed origins
+      callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
   credentials: true
 }));
+
+// Make sure OPTIONS requests are handled properly
+app.options('*', cors());
+
+// Add a middleware that explicitly sets CORS headers for all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
+  next();
+});
+
+// Add explicit handling for OPTIONS requests
+// app.options('*', cors(corsOptions));
+
+// Add a middleware to log all requests for debugging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.headers.origin || 'No origin'}`);
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -153,22 +161,6 @@ if (!skipRedis) {
 } else {
   console.log('Redis is skipped by configuration, not initializing queues');
 }
-
-// Connect to MongoDB
-const connectToMongoDB = async () => {
-  try {
-    console.log('Attempting to connect to MongoDB for Compiler service...');
-    // console.log('MongoDB URI:', process.env.MONGODB_URI ? 'URI is defined' : 'URI is not defined');
-    
-    await mongoose.connect(process.env.MONGODB_URI);
-    
-    console.log('Connected to MongoDB for Compiler service');
-    return true;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    return false;
-  }
-};
 
 // Add job to queue
 const addJobToRunnerQueue = async (code, language, input, problemId) => {
@@ -888,11 +880,18 @@ app.post('/verdict/:problemId', async (req, res) => {
 
 // Add a health check endpoint
 app.get('/health', (req, res) => {
+  // Explicitly set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
   res.json({ 
     status: 'ok',
     jwtSecretConfigured: !!process.env.JWT_SECRET_KEY,
     mongodbConnected: mongoose.connection.readyState === 1,
-    redisAvailable
+    redisAvailable,
+    environment: process.env.NODE_ENV || 'production',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -1051,10 +1050,8 @@ app.get('/test-cases/:problemId', async (req, res) => {
     
     // Try multiple possible CRUD URLs
     const possibleUrls = [
-      process.env.CRUD_URL || 'http://localhost:2000',
-      'http://crud-service:2000',
-      'http://localhost:2000',
-      process.env.BACKEND_2_URL || 'http://localhost:2000'
+      process.env.CRUD_URL || 'https://online-judge-crud.onrender.com',
+      process.env.BACKEND_2_URL
     ];
     
     const results = {};
@@ -1090,6 +1087,20 @@ app.get('/test-cases/:problemId', async (req, res) => {
       error: error.message
     });
   }
+});
+
+// Add a simple test endpoint for CORS
+app.get('/test-cors', (req, res) => {
+  // Explicitly set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  res.json({ 
+    message: 'CORS test successful',
+    origin: req.headers.origin || 'No origin',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Function to start the server with port fallback

@@ -45,7 +45,7 @@ const validateTestCase = async (testCase, index) => {
 export const validateTestCases = async (problemId) => {
   try {
     // Fetch test cases from CRUD backend
-    const response = await axios.get(`${process.env.CRUD_URL || 'http://localhost:2000'}/crud/getOne/${problemId}`);
+    const response = await axios.get(`${process.env.CRUD_URL || 'https://online-judge-crud.onrender.com'}/crud/getOne/${problemId}`);
     const problem = response.data;
     const testCases = problem.testCases || [];
     

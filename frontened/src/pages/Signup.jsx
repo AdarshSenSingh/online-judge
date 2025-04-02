@@ -39,8 +39,8 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Check if environment variable is defined
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      // Use environment variable without fallback
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const url_1 = `${backendUrl}/auth`;
       
       console.log(`Attempting to connect to: ${url_1}/register`);
@@ -160,4 +160,6 @@ const Signup = () => {
 };
 
 export default Signup;
+
+
 
