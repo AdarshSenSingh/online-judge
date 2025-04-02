@@ -57,21 +57,7 @@ const app = express();
 
 // Configure CORS - make this the FIRST middleware
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    // Check if the origin is in the allowed list
-    if (ALLOWED_ORIGINS.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      // For development and debugging, allow all origins
-      console.log(`CORS request from unlisted origin: ${origin}`);
-      callback(null, true);
-    }
-  },
+  origin: '*', // Allow all origins for now to debug the issue
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
   credentials: true,
@@ -84,6 +70,16 @@ app.use(cors(corsOptions));
 
 // Handle OPTIONS requests explicitly
 app.options('*', cors(corsOptions));
+
+// Add a middleware to ensure CORS headers are set for all responses
+app.use((req, res, next) => {
+  // Set CORS headers for all responses
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Add a middleware to log all requests for debugging
 app.use((req, res, next) => {
@@ -896,9 +892,13 @@ app.post('/verdict/:problemId', async (req, res) => {
   }
 });
 
-// Add a health check endpoint
+// Add a health check endpoint with explicit CORS headers
 app.get('/health', (req, res) => {
-  // Health check endpoint - no need to set CORS headers manually as they're handled by the cors middleware
+  // Explicitly set CORS headers for this endpoint
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   res.json({
     status: 'ok',
     service: 'compiler',
@@ -909,6 +909,15 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     allowedOrigins: ALLOWED_ORIGINS
   });
+});
+
+// Add an OPTIONS handler for the health endpoint
+app.options('/health', (req, res) => {
+  // Explicitly set CORS headers for preflight
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204);
 });
 
 // Debug route to check submission model
@@ -1105,9 +1114,13 @@ app.get('/test-cases/:problemId', async (req, res) => {
   }
 });
 
-// Add a simple test endpoint for CORS
+// Add a simple test endpoint for CORS - with explicit headers
 app.get('/test-cors', (req, res) => {
-  // No need to set CORS headers manually - they're handled by the cors middleware
+  // Explicitly set CORS headers for this endpoint
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   res.json({
     message: 'CORS test successful',
     origin: req.headers.origin || 'No origin',
@@ -1117,9 +1130,30 @@ app.get('/test-cors', (req, res) => {
   });
 });
 
+// Add a very simple endpoint that just returns text
+app.get('/simple-test', (req, res) => {
+  // Explicitly set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+
+  // Just return plain text
+  res.type('text/plain').send('Simple test endpoint is working');
+});
+
 // Add a specific endpoint for preflight testing
-app.options('/test-cors-preflight', cors(corsOptions));
+app.options('/test-cors-preflight', (req, res) => {
+  // Explicitly set CORS headers for preflight
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204);
+});
+
 app.post('/test-cors-preflight', (req, res) => {
+  // Explicitly set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'POST');
+
   res.json({
     message: 'CORS preflight test successful',
     origin: req.headers.origin || 'No origin',
