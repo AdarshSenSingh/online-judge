@@ -44,7 +44,7 @@ const connectToMongoDB = async () => {
       console.warn('MongoDB URI not provided in environment variables');
       return;
     }
-    
+
     await mongoose.connect(mongoURI);
     console.log('Connected to MongoDB');
   } catch (error) {
@@ -57,10 +57,26 @@ const app = express();
 
 // Configure CORS - make this the FIRST middleware
 const corsOptions = {
-  origin: '*', // Allow all origins temporarily to debug
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Check if the origin is in the allowed list
+    if (ALLOWED_ORIGINS.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // For development and debugging, allow all origins
+      console.log(`CORS request from unlisted origin: ${origin}`);
+      callback(null, true);
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
-  credentials: true
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
 // Apply CORS first - before any routes
@@ -72,28 +88,11 @@ app.options('*', cors(corsOptions));
 // Add a middleware to log all requests for debugging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.headers.origin || 'No origin'}`);
-  
-  // Set CORS headers explicitly for all responses
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
   next();
 });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Add this after your CORS middleware but before your routes
-app.use((req, res, next) => {
-  // Set CORS headers explicitly for all responses
-  res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
 
 // Redis and Bull queue variables
 let jobRunnerQueue = null;
@@ -108,7 +107,7 @@ if (!skipRedis) {
   try {
     // Only import Bull if Redis is not skipped
     const Bull = (await import('bull')).default;
-    
+
     const redisConfig = {
       host: isDocker ? 'redis' : (process.env.REDIS_HOST || 'localhost'),
       port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -117,10 +116,10 @@ if (!skipRedis) {
       tls: process.env.REDIS_TLS === 'true' ? {} : false,
       maxRetriesPerRequest: 3
     };
-    
-    console.log('Initializing Bull queues with Redis config:', 
+
+    console.log('Initializing Bull queues with Redis config:',
       { host: redisConfig.host, port: redisConfig.port, tls: redisConfig.tls ? 'enabled' : 'disabled' });
-    
+
     // Initialize Bull queues with error handling
     jobRunnerQueue = new Bull('code-runner-queue', {
       redis: redisConfig,
@@ -130,7 +129,7 @@ if (!skipRedis) {
         removeOnComplete: true
       }
     });
-    
+
     submissionQueue = new Bull('submission-queue', {
       redis: redisConfig,
       defaultJobOptions: {
@@ -139,18 +138,18 @@ if (!skipRedis) {
         removeOnComplete: true
       }
     });
-    
+
     // Add error handlers to queues
     jobRunnerQueue.on('error', (error) => {
       console.error('Job runner queue error:', error);
       redisAvailable = false;
     });
-    
+
     submissionQueue.on('error', (error) => {
       console.error('Submission queue error:', error);
       redisAvailable = false;
     });
-    
+
     redisAvailable = true;
     console.log('Bull queues initialized successfully');
   } catch (error) {
@@ -169,10 +168,10 @@ const addJobToRunnerQueue = async (code, language, input, problemId) => {
     try {
       const filePath = await generateFile(language, code);
       const inputPath = await generateInputFile(input);
-      
+
       let output;
       const start = moment(new Date());
-      
+
       if (language === "java") {
         output = await executeJava(filePath, inputPath);
       } else if (language === "python") {
@@ -180,28 +179,28 @@ const addJobToRunnerQueue = async (code, language, input, problemId) => {
       } else {
         output = await executeCpp(filePath, inputPath);
       }
-      
+
       const end = moment(new Date());
       const executionTime = end.diff(start, "seconds", true);
-      
+
       return { output, executionTime };
     } catch (error) {
       throw new Error(error.stderr || error.message || "Error executing code");
     }
   }
-  
+
   // Only try to use the queue if Redis is available
   if (!jobRunnerQueue) {
     throw new Error('Queue not available');
   }
-  
+
   const job = await jobRunnerQueue.add({
     code,
     language,
     input,
     problemId
   });
-  
+
   return job.id;
 };
 
@@ -220,11 +219,11 @@ const addJobToSubmissionQueue = async (code, language, problemId, userId, submis
       throw new Error(error.message || "Error processing submission");
     }
   }
-  
+
   if (!submissionQueue) {
     throw new Error('Queue not available');
   }
-  
+
   const job = await submissionQueue.add({
     code,
     language,
@@ -232,7 +231,7 @@ const addJobToSubmissionQueue = async (code, language, problemId, userId, submis
     userId,
     submissionId
   });
-  
+
   return job.id;
 };
 
@@ -240,19 +239,19 @@ const addJobToSubmissionQueue = async (code, language, problemId, userId, submis
 const initializeApp = async () => {
   await connectToMongoDB();
   // Remove the call to initializeQueues since it doesn't exist
-  
+
   // Process jobs in the queue if Redis is available
   if (redisAvailable && jobRunnerQueue) {
     jobRunnerQueue.process(async (job) => {
       const { code, language, input } = job.data;
-      
+
       try {
         const filePath = await generateFile(language, code);
         const inputPath = await generateInputFile(input);
-        
+
         let output;
         const start = moment(new Date());
-        
+
         if (language === "java") {
           output = await executeJava(filePath, inputPath);
         } else if (language === "python") {
@@ -260,19 +259,19 @@ const initializeApp = async () => {
         } else {
           output = await executeCpp(filePath, inputPath);
         }
-        
+
         const end = moment(new Date());
         const executionTime = end.diff(start, "seconds", true);
-        
+
         return { output, executionTime };
       } catch (error) {
-        return { 
-          error: error.stderr || error.message || "Error executing code" 
+        return {
+          error: error.stderr || error.message || "Error executing code"
         };
       }
     });
   }
-  
+
   console.log('Application initialized successfully');
 };
 
@@ -280,26 +279,26 @@ const initializeApp = async () => {
 const verifyToken = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       // console.log('No token provided or invalid format');
       return res.status(401).json({ error: 'No token provided or invalid format' });
     }
-    
+
     const token = authHeader.split(' ')[1];
     // console.log('Token received:', token.substring(0, 10) + '...');
-    
+
     // Use the correct secret key
     const secret = process.env.JWT_SECRET || process.env.JWT_SECRET_KEY || 'your_jwt_secret';
     // console.log('Using secret key:', secret ? 'Secret is defined' : 'Secret is not defined');
-    
+
     const decoded = jwt.verify(token, secret);
     // console.log('Token decoded successfully:', decoded);
-    
+
     // Set userId from the decoded token
     req.userId = decoded.userId || decoded._id || decoded.id;
     // console.log('User ID set in request:', req.userId);
-    
+
     next();
   } catch (error) {
     console.error('Token verification error:', error.message);
@@ -314,32 +313,32 @@ app.get('/', (req, res) => {
 
 // Route to execute code
 app.post('/run', async (req, res) => {
-  // console.log('Received /run request:', req.body);
-  
+  console.log('Received /run request from origin:', req.headers.origin);
+
   try {
     const { language = 'cpp', code, input = '' } = req.body;
-    
+
     if (!code) {
       return res.status(400).json({ error: 'Code is required' });
     }
-    
+
     // Execute the code
     try {
       const result = await addJobToRunnerQueue(code, language, input);
-      
+
       // Check if result is a job ID (when using Redis) or direct output
       if (typeof result === 'string' && redisAvailable) {
         // It's a job ID, so we need to wait for the job to complete
         const job = await jobRunnerQueue.getJob(result);
         const jobResult = await job.finished();
-        
+
         if (jobResult.error) {
-          return res.status(400).json({ 
-            success: false, 
-            error: jobResult.error 
+          return res.status(400).json({
+            success: false,
+            error: jobResult.error
           });
         }
-        
+
         return res.json({
           success: true,
           output: jobResult.output,
@@ -354,9 +353,10 @@ app.post('/run', async (req, res) => {
         });
       }
     } catch (error) {
-      return res.status(400).json({ 
-        success: false, 
-        error: error.message || "Error executing code" 
+      console.error('Error executing code:', error);
+      return res.status(400).json({
+        success: false,
+        error: error.message || "Error executing code"
       });
     }
   } catch (error) {
@@ -370,21 +370,21 @@ app.post('/test/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { language = 'cpp', code, testCaseId } = req.body;
-    
+
     if (!code) {
       return res.status(400).json({ error: "Code is required" });
     }
-    
+
     // Get test case from database
     const testCase = await TestCase.findById(testCaseId);
     if (!testCase) {
       return res.status(404).json({ error: "Test case not found" });
     }
-    
+
     // Generate file and input
     let filePath = await generateFile(language, code);
     let inputPath = await generateInputFile(testCase.input);
-    
+
     // Execute based on language
     let output;
     try {
@@ -402,11 +402,11 @@ app.post('/test/:id', async (req, res) => {
         details: error
       });
     }
-    
+
     // Compare outputs
     const expectedOutput = testCase.output.replace(/\r\n/g, '\n').trim();
     const actualOutput = output.replace(/\r\n/g, '\n').trim();
-    
+
     res.json({
       testCase: {
         input: testCase.input,
@@ -442,11 +442,11 @@ app.post("/test-solution/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { code, language = 'cpp' } = req.body;
-    
+
     if (!code) {
       return res.status(400).json({ error: "Code is required" });
     }
-    
+
     const result = await testSolution(id, language, code);
     res.json(result);
   } catch (error) {
@@ -458,18 +458,18 @@ app.post("/test-solution/:id", async (req, res) => {
 app.get("/debug-submissions/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // console.log(`Debugging submissions for userId: ${userId}`);
     // console.log(`userId type: ${typeof userId}`);
-    
+
     // Count total submissions in the database
     const totalCount = await Submission.countDocuments();
     // console.log(`Total submissions in database: ${totalCount}`);
-    
+
     // Count submissions for this user
     const userCount = await Submission.countDocuments({ userId });
     // console.log(`Total submissions for user ${userId}: ${userCount}`);
-    
+
     // Get a sample of submissions to check userId format
     const sampleSubmissions = await Submission.find().limit(5);
     if (sampleSubmissions.length > 0) {
@@ -478,16 +478,16 @@ app.get("/debug-submissions/:userId", async (req, res) => {
         // console.log(`- ${sub.userId} (type: ${typeof sub.userId})`);
       });
     }
-    
+
     // Get recent submissions for this user
     const submissions = await Submission.find({ userId })
       .sort({ timestamp: -1 })
       .limit(5);
-    
+
     // Check MongoDB connection state
     const connectionState = mongoose.connection.readyState;
     console.log(`MongoDB connection state: ${connectionState}`);
-    
+
     res.json({
       success: true,
       connectionState,
@@ -516,13 +516,13 @@ app.get("/debug-submissions/:userId", async (req, res) => {
 app.post("/compiler/:id/compile", async (req, res) => {
   try {
     const { language = "cpp", code } = req.body;
-    
+
     if (!code) {
       return res.status(400).json({ error: "Code is required" });
     }
-    
+
     let filePath = await generateFile(language, code);
-    
+
     try {
       if (language === "java") {
         // For Java, just compile without running
@@ -534,12 +534,12 @@ app.post("/compiler/:id/compile", async (req, res) => {
         // Python is interpreted, so we do a syntax check
         await executePython(filePath, null, true);
       }
-      
+
       return res.json({ success: true, message: "Compilation successful" });
     } catch (error) {
       console.error("Compilation error:", error);
-      return res.status(400).json({ 
-        error: error.stderr || error.message || "Compilation failed" 
+      return res.status(400).json({
+        error: error.stderr || error.message || "Compilation failed"
       });
     }
   } catch (error) {
@@ -552,7 +552,7 @@ app.post("/compiler/:id/compile", async (req, res) => {
 app.get("/job-status/:queue/:id", async (req, res) => {
   try {
     const { queue, id } = req.params;
-    
+
     let job;
     if (queue === 'runner') {
       job = await jobRunnerQueue.getJob(id);
@@ -561,15 +561,15 @@ app.get("/job-status/:queue/:id", async (req, res) => {
     } else {
       return res.status(400).json({ error: "Invalid queue type" });
     }
-    
+
     if (!job) {
       return res.status(404).json({ error: "Job not found" });
     }
-    
+
     const state = await job.getState();
     const progress = job._progress;
     const result = job.returnvalue;
-    
+
     res.json({
       id: job.id,
       state,
@@ -590,41 +590,41 @@ const executeCode = async (language, code, input) => {
     // Create a temporary directory for the code
     const dirPath = path.join(os.tmpdir(), `code-${Date.now()}`);
     await fs.mkdir(dirPath, { recursive: true });
-    
+
     let fileName, command;
-    
+
     // Set up file and command based on language
     if (language === 'cpp') {
       fileName = 'main.cpp';
       await fs.writeFile(path.join(dirPath, fileName), code);
       await fs.writeFile(path.join(dirPath, 'input.txt'), input || '');
-      
+
       // Compile and run
       await execPromise(`g++ ${fileName} -o main`, { cwd: dirPath });
       const { stdout, stderr } = await execPromise('./main < input.txt', { cwd: dirPath });
-      
+
       return { output: stdout || stderr };
     } else if (language === 'python') {
       fileName = 'main.py';
       await fs.writeFile(path.join(dirPath, fileName), code);
       await fs.writeFile(path.join(dirPath, 'input.txt'), input || '');
-      
+
       // Run Python code
       const { stdout, stderr } = await execPromise(`python ${fileName} < input.txt`, { cwd: dirPath });
-      
+
       return { output: stdout || stderr };
     } else if (language === 'java') {
       fileName = 'Main.java';
       await fs.writeFile(path.join(dirPath, fileName), code);
       await fs.writeFile(path.join(dirPath, 'input.txt'), input || '');
-      
+
       // Compile and run Java code
       await execPromise(`javac ${fileName}`, { cwd: dirPath });
       const { stdout, stderr } = await execPromise(`java Main < input.txt`, { cwd: dirPath });
-      
+
       return { output: stdout || stderr };
     }
-    
+
     return { error: 'Unsupported language' };
   } catch (error) {
     console.error('Execution error:', error);
@@ -635,17 +635,17 @@ const executeCode = async (language, code, input) => {
 // Route to submit a solution - modified to not require authentication
 app.post('/submit', async (req, res) => {
   const { language = 'cpp', code, problemId, problemTitle = 'Unknown Problem' } = req.body;
-  
+
   // console.log(`[DEBUG] Submit request received: problemId=${problemId}, language=${language}`);
-  
+
   if (!code) {
     return res.status(400).json({ error: 'Code is required' });
   }
-  
+
   if (!problemId) {
     return res.status(400).json({ error: 'Problem ID is required' });
   }
-  
+
   try {
     // Create a new submission with anonymous user
     const submission = new Submission({
@@ -658,36 +658,36 @@ app.post('/submit', async (req, res) => {
       status: 'pending',
       submittedAt: new Date()
     });
-    
+
     // Save the submission
     const savedSubmission = await submission.save();
     // console.log(`[DEBUG] Submission saved with ID: ${savedSubmission._id}`);
-    
+
     // Process the submission
     let result;
     try {
       // Get verdict for the submission
       result = await getVerdict(problemId, code, language, savedSubmission._id);
       // console.log(`[DEBUG] Verdict result:`, result);
-      
+
       // Update the submission with the verdict result
       await Submission.findByIdAndUpdate(savedSubmission._id, {
         verdict: result.verdict,
         status: 'completed',
         completedAt: new Date()
       });
-      
+
       // console.log(`[DEBUG] Submission updated with verdict`);
     } catch (verdictError) {
       console.error(`[ERROR] Error getting verdict:`, verdictError);
-      result = { 
-        verdict: { 
-          status: 'Error', 
-          message: verdictError.message || 'Error processing submission' 
-        } 
+      result = {
+        verdict: {
+          status: 'Error',
+          message: verdictError.message || 'Error processing submission'
+        }
       };
     }
-    
+
     // Return the result
     res.json({
       success: true,
@@ -704,11 +704,11 @@ app.post('/submit', async (req, res) => {
 app.get('/submissions', async (req, res) => {
   try {
     // console.log(`[DEBUG] Fetching all submissions`);
-    
+
     // Get all submissions, sorted by newest first
     const submissions = await Submission.find().sort({ submittedAt: -1 }).limit(100);
     // console.log(`[DEBUG] Found ${submissions.length} submissions`);
-    
+
     // Return the submissions
     res.json({
       submissions,
@@ -763,38 +763,38 @@ app.post('/verdict/:problemId', async (req, res) => {
   try {
     const { problemId } = req.params;
     const { language, code } = req.body;
-    
+
     // console.log(`Processing verdict request for problem: ${problemId}`);
-    
+
     // Validate required fields
     if (!code) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Code is required" 
+      return res.status(400).json({
+        success: false,
+        error: "Code is required"
       });
     }
-    
+
     if (!language) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Language is required" 
+      return res.status(400).json({
+        success: false,
+        error: "Language is required"
       });
     }
-    
+
     // For development/testing, allow a special mode to bypass problem fetching
     const isDevelopmentMode = process.env.NODE_ENV === 'development' || true;
-    
+
     if (isDevelopmentMode) {
       try {
         // console.log("Running in development mode, using simplified verdict process");
-        
+
         // Create a simple verdict based on the code
         const output = await runCode(language, code, "");
-        
+
         // Check if output contains "Hello World" as a simple test
         const expectedOutput = "Hello World";
         const isCorrect = output.trim().includes(expectedOutput);
-        
+
         const verdict = {
           status: isCorrect ? "Accepted" : "Wrong Answer",
           message: isCorrect ? "Your solution passed the test case." : "Your solution failed the test case.",
@@ -811,7 +811,7 @@ app.post('/verdict/:problemId', async (req, res) => {
             }
           ]
         };
-        
+
         return res.json({
           success: true,
           verdict,
@@ -821,24 +821,24 @@ app.post('/verdict/:problemId', async (req, res) => {
         console.error("Error in development mode verdict:", error);
       }
     }
-    
+
     // If development mode failed or is disabled, try normal process
     try {
       // Get verdict
       const verdict = await getVerdict(problemId, code, language);
-      
+
       return res.json({
         success: true,
         verdict
       });
     } catch (error) {
       console.error(`Error getting verdict:`, error);
-      
+
       // If we're in development mode and the error is about fetching the problem,
       // create a mock verdict
       if (isDevelopmentMode && error.message && error.message.includes("fetch")) {
         console.log("Creating mock verdict for development");
-        
+
         const verdict = {
           status: "Accepted",
           message: "Development mode: Mock verdict provided.",
@@ -855,42 +855,40 @@ app.post('/verdict/:problemId', async (req, res) => {
             }
           ]
         };
-        
+
         return res.json({
           success: true,
           verdict,
           warning: "Development mode: Using mock verdict due to problem fetch failure."
         });
       }
-      
-      return res.status(400).json({ 
-        success: false, 
-        error: `Error getting verdict: ${error.message}` 
+
+      return res.status(400).json({
+        success: false,
+        error: `Error getting verdict: ${error.message}`
       });
     }
   } catch (error) {
     console.error(`Error in verdict endpoint:`, error);
-    return res.status(500).json({ 
-      success: false, 
-      error: `Server error: ${error.message}` 
+    return res.status(500).json({
+      success: false,
+      error: `Server error: ${error.message}`
     });
   }
 });
 
 // Add a health check endpoint
 app.get('/health', (req, res) => {
-  // Explicitly set CORS headers
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  res.json({ 
+  // Health check endpoint - no need to set CORS headers manually as they're handled by the cors middleware
+  res.json({
     status: 'ok',
+    service: 'compiler',
     jwtSecretConfigured: !!process.env.JWT_SECRET_KEY,
     mongodbConnected: mongoose.connection.readyState === 1,
     redisAvailable,
     environment: process.env.NODE_ENV || 'production',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    allowedOrigins: ALLOWED_ORIGINS
   });
 });
 
@@ -899,10 +897,10 @@ app.get('/debug/submission-model', async (req, res) => {
   try {
     // Get the Submission model schema
     const schema = Submission.schema.obj;
-    
+
     // Get a sample submission if available
     const sampleSubmission = await Submission.findOne({});
-    
+
     res.json({
       schema,
       sampleSubmission: sampleSubmission || null,
@@ -918,11 +916,11 @@ app.get('/debug/submission-model', async (req, res) => {
 app.post('/test/create-submission', async (req, res) => {
   try {
     const { userId, problemId, code, language } = req.body;
-    
+
     if (!userId || !problemId || !code || !language) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
     // Create a test submission
     const submission = new Submission({
       userId,
@@ -934,11 +932,11 @@ app.post('/test/create-submission', async (req, res) => {
       submittedAt: new Date(),
       completedAt: new Date()
     });
-    
+
     // Save the submission
     const savedSubmission = await submission.save();
     // console.log(`[TEST] Created test submission: ${savedSubmission._id}`);
-    
+
     // Return the saved submission
     res.json({
       success: true,
@@ -956,7 +954,7 @@ app.get('/test/all-submissions', async (req, res) => {
     // Get all submissions in the database
     const submissions = await Submission.find({});
     // console.log(`[TEST] Found ${submissions.length} total submissions in database`);
-    
+
     // Return all submissions
     res.json({
       success: true,
@@ -973,17 +971,17 @@ app.get('/test/all-submissions', async (req, res) => {
 app.get('/submission/:id', async (req, res) => {
   try {
     const submissionId = req.params.id;
-    
+
     // Find the submission in the database
     const submission = await Submission.findById(submissionId);
-    
+
     if (!submission) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Submission not found' 
+      return res.status(404).json({
+        success: false,
+        error: 'Submission not found'
       });
     }
-    
+
     // Return the submission data
     return res.json({
       success: true,
@@ -999,9 +997,9 @@ app.get('/submission/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching submission:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Server error' 
+    return res.status(500).json({
+      success: false,
+      error: 'Server error'
     });
   }
 });
@@ -1011,17 +1009,17 @@ app.get('/debug/test-cases/:id', async (req, res) => {
   try {
     const { id } = req.params;
     // console.log(`Checking test cases for problem ID: ${id}`);
-    
+
     // Try to fetch the problem from the CRUD service
     // console.log(`Using CRUD URL: ${CRUD_URL}`);
     const response = await axios.get(`${CRUD_URL}/crud/getOne/${id}`);
-    
+
     if (!response.data) {
       return res.status(404).json({ error: 'Problem not found' });
     }
-    
+
     const testCases = response.data.testCases || [];
-    
+
     res.json({
       problemId: id,
       problemTitle: response.data.title,
@@ -1033,7 +1031,7 @@ app.get('/debug/test-cases/:id', async (req, res) => {
     });
   } catch (error) {
     console.error(`Error checking test cases:`, error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: error.message,
       stack: error.stack,
       response: error.response?.data
@@ -1046,22 +1044,22 @@ app.get('/test-cases/:problemId', async (req, res) => {
   try {
     const { problemId } = req.params;
     // console.log(`Manual test case verification for problem: ${problemId}`);
-    
+
     // Try multiple possible CRUD URLs
     const possibleUrls = [
       process.env.CRUD_URL || 'https://online-judge-crud.onrender.com',
       process.env.BACKEND_2_URL
     ];
-    
+
     const results = {};
-    
+
     for (const baseUrl of possibleUrls) {
       try {
         // console.log(`Trying CRUD endpoint: ${baseUrl}/crud/getOne/${problemId}`);
         const response = await axios.get(`${baseUrl}/crud/getOne/${problemId}`, {
           timeout: 3000
         });
-        
+
         results[baseUrl] = {
           success: true,
           problemFound: !!response.data,
@@ -1076,7 +1074,7 @@ app.get('/test-cases/:problemId', async (req, res) => {
         };
       }
     }
-    
+
     res.json({
       problemId,
       results
@@ -1094,8 +1092,8 @@ app.get('/test-cors', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  res.json({ 
+
+  res.json({
     message: 'CORS test successful',
     origin: req.headers.origin || 'No origin',
     timestamp: new Date().toISOString()

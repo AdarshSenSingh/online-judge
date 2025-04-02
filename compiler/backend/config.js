@@ -13,10 +13,11 @@ export const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://online-judge-sandy.vercel.app',
-  // Add your specific Vercel domain
-  'https://online-judge-sandy.vercel.app',
-  // Add the exact origin that's making the request (from error message)
-  'https://online-judge-sandy.vercel.app'
+  'https://online-judge.vercel.app',
+  'https://online-judge-git-main-adarshsensingh.vercel.app',
+  'https://online-judge-adarshsensingh.vercel.app',
+  // Add any additional Vercel preview domains here
+  process.env.CORS_ORIGIN || 'https://online-judge-sandy.vercel.app'
 ];
 
 // Other configuration values
