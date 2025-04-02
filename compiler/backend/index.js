@@ -60,11 +60,18 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    // Add your Vercel domain explicitly
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app',
+      'https://online-judge-sandy.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ];
+    
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       console.log(`CORS blocked for origin: ${origin}`);
-      // In production, only allow listed origins
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -73,16 +80,13 @@ app.use(cors({
   credentials: true
 }));
 
-// Make sure OPTIONS requests are handled properly
-app.options('*', cors());
-
-// Add a middleware that explicitly sets CORS headers for all responses
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
-  next();
-});
+// Remove this middleware as it's overriding the CORS settings
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
+//   next();
+// });
 
 // Add explicit handling for OPTIONS requests
 // app.options('*', cors(corsOptions));
