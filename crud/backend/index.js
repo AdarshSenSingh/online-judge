@@ -19,6 +19,7 @@ app.use(cors({
     origin: function(origin, callback) {
         const allowedOrigins = [
             'https://online-judge-app.vercel.app',
+            'https://online-judge-sandy.vercel.app',
             'http://localhost:5173'
         ];
         // Allow requests with no origin (like mobile apps or curl requests)

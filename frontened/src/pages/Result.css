@@ -179,7 +179,8 @@
   color: #b91c1c;
 }
 
-.status-badge.compilation-error {
+.status-badge.compilation-error,
+.status-badge.compiler-error {
   background-color: #fef3c7;
   color: #92400e;
 }
@@ -197,6 +198,24 @@
 .status-badge.in-queue {
   background-color: #f0ad4e;
   color: #fff;
+}
+
+.status-badge.runtime-error {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+/* Verdict badge - add compiler error styling */
+.verdict-badge.compilation-error,
+.verdict-badge.compiler-error {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Verdict badge - add runtime error styling */
+.verdict-badge.runtime-error {
+  background-color: #dbeafe;
+  color: #1e40af;
 }
 
 /* Language badge */
@@ -294,6 +313,26 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Small loading spinner for buttons */
+.loading-spinner.small {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0.2rem solid rgba(59, 130, 246, 0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s ease-in-out infinite;
+  margin: 0 auto;
+  display: inline-block;
+}
+
+/* Make sure the action buttons maintain consistent height when showing spinner */
+.action-buttons {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Empty state */

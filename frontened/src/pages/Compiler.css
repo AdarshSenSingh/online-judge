@@ -226,6 +226,37 @@
   }
 }
 
+/* Spinner for submit button */
+.spinner {
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.submit-btn.loading {
+  background-color: #4a5568;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-btn.loading:hover {
+  background-color: #4a5568;
+}
+
 /* Responsive styles */
 @media (max-width: 1024px) {
   .problem-container,
@@ -516,5 +547,6 @@
 .view-testcase-btn:hover {
   background-color: #e0e0e0;
 }
+
 
 

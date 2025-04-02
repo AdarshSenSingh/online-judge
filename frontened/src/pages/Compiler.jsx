@@ -175,9 +175,11 @@ if __name__ == "__main__":
     setLoading(true);
     
     try {
+      // Show a loading toast that will be dismissed when result arrives
+      const loadingToastId = toast.loading("Submitting your solution...");
+      
       // Change from verdict endpoint to submit endpoint
       const submitUrl = `${url_3}/submit`;
-      // console.log("Calling submit endpoint:", submitUrl);
       
       const response = await axios.post(
         submitUrl,
@@ -189,7 +191,8 @@ if __name__ == "__main__":
         }
       );
       
-      // console.log("Submission response:", response.data);
+      // Dismiss the loading toast
+      toast.dismiss(loadingToastId);
       
       if (response.data.success) {
         const receivedVerdict = response.data.result?.verdict || { status: "Processing" };
@@ -211,7 +214,7 @@ if __name__ == "__main__":
       }
     } catch (error) {
       console.error("Error submitting solution:", error);
-      console.error("Error details:", error.response?.data || "No response data");
+      toast.error("Failed to submit solution: " + (error.message || "Unknown error"));
       
       // If we're in development mode, create a mock verdict
       if (process.env.NODE_ENV === 'development') {
@@ -349,7 +352,20 @@ if __name__ == "__main__":
             placeholder='Output will display here'
           />
           <div className="button-group">
-            <button className="submit-btn" onClick={handleFinal}>Submit Solution</button>
+            <button 
+              className={`submit-btn ${isSubmitting ? 'loading' : ''}`} 
+              onClick={handleFinal}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="spinner"></span>
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                "Submit Solution"
+              )}
+            </button>
             
             {hasSubmitted && (
               <button 
@@ -417,6 +433,7 @@ if __name__ == "__main__":
 }
 
 export default Compiler;
+
 
 
 

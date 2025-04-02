@@ -68,6 +68,7 @@ app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
       'https://online-judge-app.vercel.app',
+      'https://online-judge-sandy.vercel.app',
       'http://localhost:5173',
       'http://127.0.0.1:5173'
     ];
@@ -1095,7 +1096,7 @@ app.get('/test-cases/:problemId', async (req, res) => {
 const startServer = () => {
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log(`Server URL: http://localhost:${PORT}`);
+    // console.log(`Server URL: http://localhost:${PORT}`);
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       console.log(`Port ${PORT} is busy, trying port ${PORT + 1}`);

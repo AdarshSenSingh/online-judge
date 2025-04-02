@@ -16,6 +16,8 @@ const Result = () => {
   const [sortOrder, setSortOrder] = useState('newest');
   // Add problems map state
   const [problemsMap, setProblemsMap] = useState({});
+  // Add submission loading state
+  const [submissionLoading, setSubmissionLoading] = useState({});
 
   const navigate = useNavigate();
 
@@ -250,6 +252,11 @@ const Result = () => {
     fetchSubmissions();
   };
 
+  // Add this function before the return statement
+  const handleRetry = async (problemId) => {
+    navigate(`/compiler/${problemId}`);
+  };
+
   return (
     <div className="submission-history-page">
       <div className="submission-header">
@@ -367,6 +374,7 @@ const Result = () => {
                            verdictStatus === 'Compilation Error' ? 'CE' :
                            verdictStatus === 'Compiler Error' ? 'CE' :
                            verdictStatus === 'Time Limit Exceeded' ? 'TLE' :
+                           verdictStatus === 'Runtime Error' ? 'RE' :
                            verdictStatus === 'In Queue' ? 'IQ' :
                            verdictStatus || 'Processing'}
                         </span>
@@ -384,13 +392,20 @@ const Result = () => {
                       </td>
                       <td>
                         <div className="action-buttons">
-                          <button 
-                            onClick={() => navigate(`/compiler/${submission.problemId}`)}
-                            className="action-button retry"
-                            title="Try Again"
-                          >
-                            Retry
-                          </button>
+                          {submissionLoading[submission._id] ? (
+                            <div className="loading-spinner small"></div>
+                          ) : (
+                            <button 
+                              onClick={() => {
+                                setSubmissionLoading(prev => ({...prev, [submission._id]: true}));
+                                handleRetry(submission.problemId);
+                              }}
+                              className="action-button retry"
+                              title="Try Again"
+                            >
+                              Retry
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
