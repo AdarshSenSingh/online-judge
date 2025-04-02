@@ -54,42 +54,33 @@ const connectToMongoDB = async () => {
 
 // Initialize Express app
 const app = express();
-// Configure CORS with specific settings
-app.use(cors({
+
+// Configure CORS - make this the FIRST middleware
+const corsOptions = {
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, curl requests)
     if (!origin) return callback(null, true);
     
-    // Add your Vercel domain explicitly
-    const allowedOrigins = [
-      process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app',
-      'https://online-judge-sandy.vercel.app',
-      'http://localhost:5173',
-      'http://localhost:3000'
-    ];
-    
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    // Use the allowed origins from config
+    if (ALLOWED_ORIGINS.includes(origin) || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       console.log(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      // Important: For debugging, allow all origins temporarily
+      callback(null, true); // Change this to the commented line below after testing
+      // callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
   credentials: true
-}));
+};
 
-// Remove this middleware as it's overriding the CORS settings
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Origin', '*');
-//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
-//   next();
-// });
+// Apply CORS first - before any routes
+app.use(cors(corsOptions));
 
-// Add explicit handling for OPTIONS requests
-// app.options('*', cors(corsOptions));
+// Handle OPTIONS requests explicitly
+app.options('*', cors(corsOptions));
 
 // Add a middleware to log all requests for debugging
 app.use((req, res, next) => {
@@ -99,6 +90,16 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add this after your CORS middleware but before your routes
+app.use((req, res, next) => {
+  // Set CORS headers explicitly for all responses
+  res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Redis and Bull queue variables
 let jobRunnerQueue = null;
