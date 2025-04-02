@@ -15,27 +15,50 @@ dotenv.config();
 // console.log("PORT:", process.env.PORT);
 
 const app = express();
-app.use(cors({
-    origin: '*', // Allow all origins temporarily to debug
+// Configure CORS with specific origins from environment variables
+const allowedOrigins = [
+    process.env.CORS_ORIGIN || 'https://online-judge-sandy.vercel.app',
+    process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app',
+    'http://localhost:3000' // Allow local development
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, etc)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(null, true); // Allow all origins in production for now
+        }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
-    credentials: true
-}));
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
 
 // Handle OPTIONS requests explicitly
-app.options('*', cors({
-    origin: '*',
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
-    credentials: true
-}));
+app.options('*', cors(corsOptions));
 
-// Add a middleware to set CORS headers for all responses
+// Additional middleware to ensure CORS headers are set for all responses
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
-    res.header('Access-Control-Allow-Credentials', 'true');
+    // Set CORS headers for all responses including errors
+    const origin = req.headers.origin;
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', '*'); // Fallback to allow all in production
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, X-Requested-With, Accept');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     next();
 });
 
@@ -61,10 +84,10 @@ const connectDB = async (retries = 2) => {
             w: "majority"
         });
         console.log("Database connection successful for CRUD service");
-        
+
         // Add test problem if needed - pass true to use existing connection
         await addTestProblem(true);
-        
+
         startServer();
     } catch (error) {
         console.error("Error While DB Connection for CRUD service:", error);
@@ -97,6 +120,7 @@ const startServer = () => {
 
 connectDB();
 
+// Apply routes after all middleware
 app.use("/crud", route);
 
 
