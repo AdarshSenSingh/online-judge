@@ -13,10 +13,7 @@ console.log("CORS Origin:", process.env.CORS_ORIGIN || "https://online-judge-san
 const corsOption = {
     origin: function(origin, callback) {
         const allowedOrigins = [
-            process.env.CORS_ORIGIN || "https://online-judge-sandy.vercel.app",
-            "https://online-judge-sandy.vercel.app",
-            "http://localhost:5173",
-            "http://localhost:3000"
+            process.env.CORS_ORIGIN || "https://online-judge-sandy.vercel.app"
         ];
 
         // Allow requests with no origin (like mobile apps or curl requests)
