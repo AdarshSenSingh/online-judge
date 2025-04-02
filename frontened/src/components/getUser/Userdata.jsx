@@ -14,7 +14,8 @@ const Userdata = () => {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const response = await axios.get('http://localhost:2000/crud/getAll');
+        const url_2 = import.meta.env.VITE_BACKEND_2_URL;
+        const response = await axios.get(`${url_2}/crud/getAll`);
         setProblems(response.data);
         setLoading(false);
       } catch (error) {
@@ -165,3 +166,4 @@ const Userdata = () => {
 };
 
 export default Userdata;
+
