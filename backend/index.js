@@ -13,17 +13,23 @@ console.log("CORS Origin:", process.env.CORS_ORIGIN || "https://online-judge-san
 const corsOption = {
     origin: function(origin, callback) {
         const allowedOrigins = [
-            process.env.CORS_ORIGIN || "https://online-judge-sandy.vercel.app"
+            process.env.CORS_ORIGIN || "https://online-judge-sandy.vercel.app",
+            "https://online-judge-sandy.vercel.app",
+            "http://localhost:5173",
+            "http://localhost:3000"
         ];
-        
+
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+
+        console.log(`CORS request from origin: ${origin}`);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development' || process.env.CORS_ORIGIN === '*') {
             callback(null, true);
         } else {
             console.log(`CORS blocked for origin: ${origin}`);
-            callback(null, true); // Allow all origins in development
+            // Allow all origins during troubleshooting
+            callback(null, true);
         }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -52,12 +58,21 @@ app.use("/auth", router);
 
 // Test endpoint for CORS
 app.get('/test-cors', (req, res) => {
-    res.json({ message: 'CORS is working!', origin: req.headers.origin });
+    res.json({
+        message: 'CORS is working!',
+        origin: req.headers.origin,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', environment: process.env.NODE_ENV });
+    res.json({
+        status: 'ok',
+        environment: process.env.NODE_ENV || 'production',
+        service: 'auth',
+        timestamp: new Date().toISOString()
+    });
 });
 
 const PORT = process.env.PORT || 5000;

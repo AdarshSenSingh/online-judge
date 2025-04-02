@@ -18,18 +18,31 @@ const app = express();
 app.use(cors({
     origin: function(origin, callback) {
         const allowedOrigins = [
-            process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app'
+            process.env.FRONTEND_URL || 'https://online-judge-sandy.vercel.app',
+            'https://online-judge-sandy.vercel.app',
+            'http://localhost:5173',
+            'http://localhost:3000'
         ];
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1 || process.env.CORS_ORIGIN === '*') {
+
+        console.log(`CORS request from origin: ${origin}`);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || process.env.CORS_ORIGIN === '*' || process.env.NODE_ENV === 'development') {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            console.log(`CORS blocked for origin: ${origin}`);
+            // Allow all origins during troubleshooting
+            callback(null, true);
         }
     },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Origin", "X-Requested-With", "Accept"],
     credentials: true
 }));
+
+// Add explicit handling for OPTIONS requests
+app.options('*', cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -52,10 +65,10 @@ const connectDB = async (retries = 2) => {
             w: "majority"
         });
         console.log("Database connection successful for CRUD service");
-        
+
         // Add test problem if needed - pass true to use existing connection
         await addTestProblem(true);
-        
+
         startServer();
     } catch (error) {
         console.error("Error While DB Connection for CRUD service:", error);
