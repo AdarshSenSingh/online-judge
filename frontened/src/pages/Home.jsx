@@ -1,137 +1,165 @@
+import React from "react";
+import { Link } from "react-router-dom";
 import home_img from "../assets/home.png";
 import "./Home.css";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 
 const Home = () => {
-  const [headingPosition, setHeadingPosition] = useState(0);
-  const headingText = "Welcome to CodeKaro.com";
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeadingPosition(prev => (prev + 1) % 20);
-    }, 100);
-    
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <>
-      <main>
-        <section className="section-hero">
-          <div className="container grid grid-two-cols">
-            {/* Left margin decoration */}
-            <div className="left-margin-decoration">
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
-            </div>
-            
-            <div className="hero-content">
-              <p className="tagline">I am a full-stack developer!</p>
-              <h1 className="moving-heading" style={{ transform: `translateX(${headingPosition}px)` }}>
-                {headingText}
-              </h1>
-              <p className="hero-description">
-                Are you ready to brush up your coding skills and push your practice to the peak?
-                Join our platform to solve challenging problems and improve your algorithmic thinking.
-              </p>
-              <div className="btn-group">
-                <Link to="/contact">
-                  <button className="btn primary-btn">Contact Me</button>
-                </Link>
-                <Link to="/learn-more">
-                  <button className="btn secondary-btn">Learn More</button>
-                </Link>
+    <div className="home-content-wrapper" style={{ fontSize: '2.28rem', lineHeight: '1.72' }}>
+      {/* Hero Section */}
+      <section className="student-hero">
+        <div className="container student-hero-grid">
+          <div className="student-hero-content">
+            <h1 className="student-hero-head">Welcome to <span className="brand-color">CodeKaro.com</span></h1>
+            <p className="student-hero-desc">
+              Elevate your coding skills with secure, AI-powered assessments.<br/>
+              Ready to learn, practice and succeed in technical skill tests with instant feedback?
+            </p>
+            <div className="flash-card-row">
+              {/* Student Flash Card */}
+              <div className="flash-card flash-card-student">
+                <div className="flash-card-icon">🎓</div>
+                <div className="flash-card-title">Students</div>
+                <div className="flash-card-desc">Practice, compete, and get instant AI support for coding skills and real assessments.</div>
+                <div className="role-cta-btns">
+                  <Link to="/student/register" className="btn primary-btn">Student Signup</Link>
+                  <Link to="/student/login" className="btn secondary-btn">Student Login</Link>
+                </div>
               </div>
-              <div className="features-preview">
-                <div className="feature-box">
-                  <span className="feature-icon">🚀</span>
-                  <span className="feature-text">100+ Coding Problems</span>
-                </div>
-                <div className="feature-box">
-                  <span className="feature-icon">⏱️</span>
-                  <span className="feature-text">Real-time Compiler</span>
-                </div>
-                <div className="feature-box">
-                  <span className="feature-icon">🏆</span>
-                  <span className="feature-text">Track Your Progress</span>
+              {/* Instructor Flash Card */}
+              <div className="flash-card flash-card-instructor">
+                <div className="flash-card-icon">👩‍🏫</div>
+                <div className="flash-card-title">Instructors</div>
+                <div className="flash-card-desc">Automate grading, manage tests, get AI analytics and save hours every week.</div>
+                <div className="role-cta-btns">
+                  <Link to="/instructor/register" className="btn primary-btn">Instructor Signup</Link>
+                  <Link to="/instructor/login" className="btn secondary-btn">Instructor Login</Link>
                 </div>
               </div>
             </div>
+            <p className="student-hero-mini">Trusted by students & companies for accurate, AI-driven code evaluation.</p>
+          </div>
+          <div className="student-hero-imgwrap">
+            <img src={home_img} alt="Online Judge" className="student-hero-img" />
+          </div>
+        </div>
+      </section>
 
-            <div className="hero-image">
-              <img
-                src={home_img}
-                alt="coding together"
-                width="400"
-                height="500"
-              />
+      {/* Student Benefits Section */}
+      <section className="student-benefits-section">
+        <div className="container">
+          <h2 className="section-title">Why You’ll Love Algol-Jniversity</h2>
+          <div className="benefits-grid">
+            <div className="benefit-card">
+              <span className="benefit-icon">🚀</span>
+              <h3>AI Code Correction</h3>
+              <p>Get instant feedback and smart hints on your code, powered by integrated AI.</p>
+            </div>
+            <div className="benefit-card">
+              <span className="benefit-icon">🛡️</span>
+              <h3>Secure Online Judge</h3>
+              <p>Your code runs in safe, cloud-powered Docker containers – just focus on coding.</p>
+            </div>
+            <div className="benefit-card">
+              <span className="benefit-icon">🕒</span>
+              <h3>Fast Grading</h3>
+              <p>Solutions auto-graded in seconds – no need to wait for manual reviews.</p>
+            </div>
+            <div className="benefit-card">
+              <span className="benefit-icon">📈</span>
+              <h3>Progress Tracking</h3>
+              <p>See all your solved problems and test cases at a glance.</p>
+            </div>
+            <div className="benefit-card">
+              <span className="benefit-icon">📚</span>
+              <h3>Real Practice Problems</h3>
+              <p>Over 40 diverse, real-world problems and tests to level up your coding.</p>
+            </div>
+            <div className="benefit-card">
+              <span className="benefit-icon">🤝</span>
+              <h3>Instructor Support</h3>
+              <p>Instant help and AI debugging tips to ensure your success.</p>
             </div>
           </div>
-          <div className="wave-divider">
-            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-              <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="shape-fill"></path>
-            </svg>
-          </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="section-features">
-          <div className="container">
-            <h2 className="section-title">Why Choose CodeKaro?</h2>
-            <div className="grid grid-three-cols">
-              <div className="feature-card">
-                <div className="feature-icon">💻</div>
-                <h3>Interactive Coding</h3>
-                <p>Write, compile, and test your code directly in the browser with our powerful online compiler.</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">📚</div>
-                <h3>Diverse Problem Set</h3>
-                <p>From easy to hard, our problems cover various algorithms and data structures to enhance your skills.</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">📊</div>
-                <h3>Performance Tracking</h3>
-                <p>Monitor your progress, see your submission history, and identify areas for improvement.</p>
-              </div>
+      {/* How it Works Section */}
+      <section className="student-how-section">
+        <div className="container">
+          <h2 className="section-title">How It Works</h2>
+          <div className="how-it-steps">
+            <div className="how-step">
+              <span className="how-step-icon">1️⃣</span>
+              <span className="how-step-text">Choose a problem or assessment</span>
+            </div>
+            <div className="how-step">
+              <span className="how-step-icon">2️⃣</span>
+              <span className="how-step-text">Write code in the built-in editor</span>
+            </div>
+            <div className="how-step">
+              <span className="how-step-icon">3️⃣</span>
+              <span className="how-step-text">Submit and get instant AI feedback</span>
+            </div>
+            <div className="how-step">
+              <span className="how-step-icon">4️⃣</span>
+              <span className="how-step-text">See your score and history</span>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
+      {/* Success/Testimonial Section */}
+      <section className="student-testimonials">
+        <div className="container">
+          <h2 className="section-title">What Students Say</h2>
+          <div className="testimonial-row">
+            <div className="testimonial-card">
+              <span className="testimonial-quote">“The AI hints helped me debug faster and learn!”</span>
+              <span className="testimonial-by">- Rahul K., B.Tech, Algol-Jniversity</span>
+            </div>
+            <div className="testimonial-card">
+              <span className="testimonial-quote">“Loved the instant grading! My interview prep was so much easier.”</span>
+              <span className="testimonial-by">- Priya S., Final Year Student</span>
+            </div>
+            <div className="testimonial-card">
+              <span className="testimonial-quote">“Saved our instructors hours each week.”</span>
+              <span className="testimonial-by">- Dr. Verma, CS Dept Faculty</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    
       <footer className="site-footer">
         <div className="container">
-          <div className="grid grid-four-cols">
+          <div className="grid-four-cols">
             <div className="footer-col">
-              <h4>CodeKaro</h4>
-              <p>Your platform for coding practice and algorithmic challenges.</p>
+              <h4>Algol-Jniversity</h4>
+              <p>Your modern platform for secure, AI-powered coding assessments and learning.</p>
             </div>
             <div className="footer-col">
               <h4>Quick Links</h4>
               <ul>
                 <li><Link to="/">Home</Link></li>
                 <li><Link to="/about">About</Link></li>
-                <li><Link to="/services">Services</Link></li>
-                <li><Link to="/contact">Contact</Link></li>
+                <li><Link to="/register">Register</Link></li>
+                <li><Link to="/login">Login</Link></li>
               </ul>
             </div>
             <div className="footer-col">
-              <h4>Features</h4>
+              <h4>Platform</h4>
               <ul>
                 <li><Link to="/problems">Problems</Link></li>
                 <li><Link to="/compiler">Compiler</Link></li>
-                <li><Link to="/result">Results</Link></li>
+                <li><Link to="/contact">Contact Us</Link></li>
               </ul>
             </div>
             <div className="footer-col">
               <h4>Connect</h4>
               <div className="social-links">
-                <a href="https://github.com/AdarshSenSingh" target="_blank" rel="noopener noreferrer" className="social-icon">GitHub</a>
-                <a href="https://www.linkedin.com/in/adarsh-sen-singh-0a8254256/" target="_blank" rel="noopener noreferrer" className="social-icon">LinkedIn</a>
-                <a href="https://x.com/AdarshSenS31360" target="_blank" rel="noopener noreferrer" className="social-icon">Twitter</a>
+                <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="social-icon">GitHub</a>
+                <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" className="social-icon">LinkedIn</a>
+                <a href="mailto:info@algol-jniversity.edu" className="social-icon">Email</a>
               </div>
             </div>
           </div>
@@ -140,10 +168,8 @@ const Home = () => {
           </div>
         </div>
       </footer>
-    </>
-  );
-};
-
-export default Home;
-
-
+      </div>
+      );
+      };
+      
+      export default Home;

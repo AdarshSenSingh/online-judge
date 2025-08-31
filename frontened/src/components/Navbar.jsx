@@ -44,20 +44,17 @@ const Navbar = () => {
                     
                     <nav className={`main-nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
                         <ul className="nav-links">
-                            <li><NavLink to="/" onClick={() => setIsMobileMenuOpen(false)}>Home</NavLink></li>
-                            <li><NavLink to="/about" onClick={() => setIsMobileMenuOpen(false)}>About</NavLink></li>
-                            <li><NavLink to="/contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</NavLink></li>
+                            <li><NavLink to="/" className="nav-pill nav-pill-home" onClick={() => setIsMobileMenuOpen(false)}>🏠 Home</NavLink></li>
+                            <li><NavLink to="/about" className="nav-pill nav-pill-about" onClick={() => setIsMobileMenuOpen(false)}>📖 About</NavLink></li>
+                            <li><NavLink to="/contact" className="nav-pill nav-pill-contact" onClick={() => setIsMobileMenuOpen(false)}>✉️ Contact</NavLink></li>
 
                             {isLogin ? (
                                 <>
-                                    <li><NavLink to="/problems" onClick={() => setIsMobileMenuOpen(false)}>Problems</NavLink></li>
-                                    <li><NavLink to="/compiler" onClick={() => setIsMobileMenuOpen(false)}>Compiler</NavLink></li>
-                                    <li><NavLink to="/logout" className="nav-btn logout-btn" onClick={() => setIsMobileMenuOpen(false)}>Logout</NavLink></li>
+                                    <li><NavLink to="/problems" className="nav-pill nav-pill-problems" onClick={() => setIsMobileMenuOpen(false)}>📝 Problems</NavLink></li>
+                                    <li><NavLink to="/compiler" className="nav-pill nav-pill-compiler" onClick={() => setIsMobileMenuOpen(false)}>💻 Compiler</NavLink></li>
                                 </>
                             ) : (
                                 <>
-                                    <li><NavLink to="/register" className="nav-btn signup-btn" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</NavLink></li>
-                                    <li><NavLink to="/login" className="nav-btn login-btn" onClick={() => setIsMobileMenuOpen(false)}>Login</NavLink></li>
                                 </>
                             )}
                         </ul>

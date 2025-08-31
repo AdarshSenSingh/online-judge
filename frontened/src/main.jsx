@@ -7,8 +7,7 @@ import { AuthProvider } from './token/auth.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <AuthProvider>
-      <React.StrictMode>
-        
+   <React.StrictMode>
     <App />
     <Toaster />
   </React.StrictMode>

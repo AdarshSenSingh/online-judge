@@ -199,11 +199,10 @@
 
 
  
-  /* Add space for fixed navbar */
-  .content-with-navbar-space {
-    padding-top: 100px; /* Adjust based on your navbar height */
-  }
-
+    /* (REMOVED - Navbar is not fixed anymore) */
+  /* .content-with-navbar-space {  -- REMOVE: related to fixed navbar */
+    /* padding-top: 100px; -- REMOVE this, navbar is not fixed */
+  
   /* Fix input text and placeholder colors */
   input, 
   textarea, 
