@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Auth.css';
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function StudentRegister() {
   const [form, setForm] = useState({
@@ -14,9 +15,9 @@ export default function StudentRegister() {
     sentOtp: '',
     location: '',
   });
-  const [error, setError] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [otpSuccess, setOtpSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -24,7 +25,6 @@ export default function StudentRegister() {
   }
   function handleSendOtp(e) {
     e.preventDefault();
-    // In real app, send OTP here. For demo, generate a mock OTP (1234)
     setShowOtp(true);
     setForm(f => ({ ...f, sentOtp: '1234' }));
     setOtpSuccess(false);
@@ -34,22 +34,51 @@ export default function StudentRegister() {
     if(form.otp === form.sentOtp && form.otp !== '') {
       setForm(f => ({ ...f, phoneVerified: true }));
       setOtpSuccess(true);
-      setError('');
+      toast.success('Phone number verified!');
     } else {
-      setError('Invalid OTP entered.');
+      toast.error('Invalid OTP entered.');
       setOtpSuccess(false);
     }
   }
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Send data to backend here, for now just frontend
+    setLoading(true);
+    const payload = {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      password: form.password,
+      phone: form.phone,
+      phoneVerified: form.phoneVerified,
+      location: form.location
+    };
+    try {
+      const response = await fetch('http://localhost:5000/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (data.status) {
+        toast.success('Registration successful! Welcome, ' + (data.student?.firstName || 'Student') + '.');
+        // Optionally reset form here
+        // setForm({firstName: '', lastName: '', email: '', password: '', phone: '', phoneVerified: false, otp: '', sentOtp: '', location: '' });
+      } else {
+        toast.error(data.msg || 'Registration failed.');
+      }
+    } catch (err) {
+      toast.error('Registration failed. Unable to connect to server.');
+    }
+    setLoading(false);
   }
 
   return (
     <section className="auth-section">
+      <Toaster position="top-right" />
       <div className="auth-card">
         <h2 className="auth-title">Student Signup</h2>
-        {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'flex', gap: '1.2rem' }}>
             <label style={{ flex: 1 }}>First Name
@@ -84,7 +113,7 @@ export default function StudentRegister() {
           <label>Location (City, Country)
             <input type="text" name="location" value={form.location} placeholder="e.g. Mumbai, India" onChange={handleChange} />
           </label>
-          <button className="btn primary-btn auth-btn" type="submit">Sign Up</button>
+          <button className="btn primary-btn auth-btn" type="submit" disabled={loading}>{loading ? 'Signing Up...' : 'Sign Up'}</button>
         </form>
         <div className="auth-links">Already have an account? <Link to="/student/login">Login</Link></div>
       </div>

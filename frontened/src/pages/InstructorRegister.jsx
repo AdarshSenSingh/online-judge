@@ -36,21 +36,54 @@ export default function InstructorRegister() {
       setForm(f => ({ ...f, [name]: value }));
     }
   }
-  function handleSendOtp(e) {
+  async function handleSendOtp(e) {
     e.preventDefault();
-    setShowOtp(true);
-    setForm(f => ({ ...f, sentOtp: '1234' }));
+    setError("");
     setOtpSuccess(false);
+    try {
+      const res = await fetch("http://localhost:5000/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone })
+      });
+      const data = await res.json();
+      if (data.status) {
+        setShowOtp(true);
+        setForm(f => ({ ...f, sentOtp: '', otp: '' })); // clear any old OTP
+        setError("");
+      } else {
+        setError(data.msg || "Failed to send OTP.");
+        setShowOtp(false);
+      }
+    } catch (err) {
+      setError("Network/Server error sending OTP");
+      setShowOtp(false);
+      console.log("handleSendOtp error:", err);
+    }
   }
-  function handleVerifyOtp(e) {
+
+  async function handleVerifyOtp(e) {
     e.preventDefault();
-    if(form.otp === form.sentOtp && form.otp !== '') {
-      setForm(f => ({ ...f, phoneVerified: true }));
-      setOtpSuccess(true);
-      setError('');
-    } else {
-      setError('Invalid OTP entered.');
+    setError("");
+    try {
+      const res = await fetch("http://localhost:5000/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone, otp: form.otp })
+      });
+      const data = await res.json();
+      if (data.status) {
+        setForm(f => ({ ...f, phoneVerified: true }));
+        setOtpSuccess(true);
+        setError("");
+      } else {
+        setError(data.msg || "OTP verification failed.");
+        setOtpSuccess(false);
+      }
+    } catch (err) {
+      setError("Network/Server error verifying OTP");
       setOtpSuccess(false);
+      console.log("handleVerifyOtp error:", err);
     }
   }
   function handleSubmit(e) {
@@ -88,8 +121,9 @@ export default function InstructorRegister() {
             </div>
             {showOtp && !form.phoneVerified && (
               <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                <input type="text" name="otp" placeholder="Enter OTP (1234)" value={form.otp} onChange={handleChange} maxLength={6} />
+                <input type="text" name="otp" placeholder="Enter OTP" value={form.otp} onChange={handleChange} maxLength={6} />
                 <button type="button" className="btn auth-btn" style={{ padding: '0.7rem 1.3rem', fontSize: '1rem' }} onClick={handleVerifyOtp}>Verify</button>
+                <button type="button" className="btn secondary-btn" style={{ padding: '0.6rem 1.1rem', fontSize: '1rem' }} onClick={handleSendOtp}>Resend OTP</button>
                 {otpSuccess && <span style={{ color: 'green', fontWeight: 500, marginLeft: 8 }}>Verified!</span>}
               </div>
             )}

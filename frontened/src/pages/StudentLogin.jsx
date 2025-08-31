@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Auth.css';
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function StudentLogin() {
     const [form, setForm] = useState({ email: '', password: '', phone: '', otp: '', sentOtp: '' });
-    const [error, setError] = useState('');
     const [otpMode, setOtpMode] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
     const [otpSuccess, setOtpSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
     const handleChange = (e) => {
         setForm(f => ({ ...f, [e.target.name]: e.target.value }));
     };
@@ -21,22 +24,40 @@ export default function StudentLogin() {
         e.preventDefault();
         if (form.otp === form.sentOtp && form.otp !== '') {
             setOtpSuccess(true);
-            setError('');
+            toast.success('Logged in with OTP!');
         } else {
-            setError('Invalid OTP.');
+            toast.error('Invalid OTP.');
             setOtpSuccess(false);
         }
     };
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // In password mode: POST to /api/student/login
-        // In OTP mode: POST /api/student/otp-verify
+        setLoading(true);
+        try {
+            const res = await fetch('http://localhost:5000/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: form.email, password: form.password })
+            });
+            const data = await res.json();
+            if (data.status) {
+                toast.success('Login successful! Welcome ' + (data.student?.firstName || 'Student'));
+                setTimeout(() => {
+                  navigate('/student');
+                }, 1200); // Allows toast to show for a moment before navigating
+            } else {
+                toast.error(data.msg || 'Login failed.');
+            }
+        } catch {
+            toast.error('Failed to connect to server.');
+        }
+        setLoading(false);
     };
     return (
         <section className="auth-section">
+            <Toaster position="top-right" />
             <div className="auth-card">
                 <h2 className="auth-title">Student Login</h2>
-                {error && <div className="auth-error">{error}</div>}
                 <div style={{display:'flex',justifyContent:'center',marginBottom:14,gap:12}}>
                   {!otpMode && (
                     <button className="btn secondary-btn" type="button" onClick={() => setOtpMode(true)}>
@@ -57,7 +78,7 @@ export default function StudentLogin() {
                     <label>Password
                         <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={6} />
                     </label>
-                    <button className="btn primary-btn auth-btn" type="submit">Login</button>
+                    <button className="btn primary-btn auth-btn" type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
                   </form>
                 )}
                 {otpMode && (
@@ -78,7 +99,7 @@ export default function StudentLogin() {
                     </label>
                   </form>
                 )}
-                <div className="auth-links">Don't have an account? <Link to="/student/register">Register</Link></div>
+                <div className="auth-links">Do not have an account? <Link to="/student/register">Register</Link></div>
             </div>
         </section>
     );

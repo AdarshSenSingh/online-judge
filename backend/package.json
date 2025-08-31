@@ -17,7 +17,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.1",
     "passport": "^0.6.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "twilio": "^5.8.2"
   }
 }
-

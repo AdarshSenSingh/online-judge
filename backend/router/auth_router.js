@@ -8,6 +8,10 @@ router.route("/").get(authRoute.home);
 router.route("/register").post(authRoute.register);
 router.route("/login").post(authRoute.login);
 
+// OTP routes
+router.route("/send-otp").post(authRoute.sendOtp);
+router.route("/verify-otp").post(authRoute.verifyOtp);
+
 // Google OAuth routes
 router.get('/google', 
   passport.authenticate('google', { scope: ['profile', 'email'] })

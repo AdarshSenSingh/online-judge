@@ -1,10 +1,10 @@
 import { NavLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import "./Navbar.css";
-import { useAuth } from '../token/auth';
+import { useAuth } from '../components/AuthProvider.jsx';
 
 const Navbar = () => {
-    const { isLogin } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -48,14 +48,16 @@ const Navbar = () => {
                             <li><NavLink to="/about" className="nav-pill nav-pill-about" onClick={() => setIsMobileMenuOpen(false)}>📖 About</NavLink></li>
                             <li><NavLink to="/contact" className="nav-pill nav-pill-contact" onClick={() => setIsMobileMenuOpen(false)}>✉️ Contact</NavLink></li>
 
-                            {isLogin ? (
+                            {isAuthenticated ? (
                                 <>
                                     <li><NavLink to="/problems" className="nav-pill nav-pill-problems" onClick={() => setIsMobileMenuOpen(false)}>📝 Problems</NavLink></li>
                                     <li><NavLink to="/compiler" className="nav-pill nav-pill-compiler" onClick={() => setIsMobileMenuOpen(false)}>💻 Compiler</NavLink></li>
+                                    <li>
+                                        <button className="nav-pill logout-btn" style={{marginLeft:'8px',color:'#e53935',background:'none',border:'none',fontWeight:700,cursor:'pointer'}} onClick={() => { setIsMobileMenuOpen(false); window.location.href = '/'; setTimeout(() => { window.location.reload(); }, 0); useAuth().logout(); }}>🚪 Logout</button>
+                                    </li>
                                 </>
                             ) : (
-                                <>
-                                </>
+                                <></>
                             )}
                         </ul>
                     </nav>

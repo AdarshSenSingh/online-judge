@@ -3,14 +3,13 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import {Toaster} from "react-hot-toast"
-import { AuthProvider } from './token/auth.jsx'
+import { AuthProvider } from './components/AuthProvider.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <AuthProvider>
-   <React.StrictMode>
-    <App />
-    <Toaster />
+  <React.StrictMode>
+    <AuthProvider>
+      <App />
+      <Toaster />
+    </AuthProvider>
   </React.StrictMode>
-  </AuthProvider>
- 
 )
