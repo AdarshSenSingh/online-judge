@@ -88,6 +88,15 @@
 .auth-links a:hover {
   color: #16226c;
 }
+.otp-timer {
+  color: #253b70;
+  margin-top: 0.3rem;
+  font-size: 1.05rem;
+  background: #f4f7ff;
+  border-radius: 0.4rem;
+  padding: 0.28rem 0.8rem;
+  display: inline-block;
+}
 @media (max-width: 600px) {
   .auth-card {
     min-width: 96vw;

@@ -18,6 +18,8 @@ import InstructorRegister from './pages/InstructorRegister';
 import InstructorLogin from './pages/InstructorLogin';
 import StudentPage from './pages/StudentPage/StudentPage';
 import InstructorPage from './pages/InstructorPage/InstructorPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
 function App() {
   return (
@@ -25,14 +27,27 @@ function App() {
       <BrowserRouter>
         <Navbar />
         <Routes>
-          <Route path='/' element={<Home />} />
+          <Route path='/' element={<PublicRoute><Home /></PublicRoute>} />
           {/* Role-based auth pages */}
-          <Route path='/student/register' element={<StudentRegister />} />
-          <Route path='/student/login' element={<StudentLogin />} />
-          <Route path='/instructor/register' element={<InstructorRegister />} />
-          <Route path='/instructor/login' element={<InstructorLogin />} />
-          <Route path='/student' element={<StudentPage />} />
-          <Route path='/instructor' element={<InstructorPage />} />
+          <Route path='/student/register' element={<PublicRoute><StudentRegister /></PublicRoute>} />
+          <Route path='/student/login' element={<PublicRoute><StudentLogin /></PublicRoute>} />
+          <Route path='/instructor/register' element={<PublicRoute><InstructorRegister /></PublicRoute>} />
+          <Route path='/instructor/login' element={<PublicRoute><InstructorLogin /></PublicRoute>} />
+          <Route path='/student' element={
+            <ProtectedRoute>
+              <StudentPage />
+            </ProtectedRoute>
+          } />
+          <Route path='/student/dashboard' element={
+            <ProtectedRoute>
+              <StudentPage />
+            </ProtectedRoute>
+          } />
+          <Route path='/instructor' element={
+            <ProtectedRoute>
+              <InstructorPage />
+            </ProtectedRoute>
+          } />
           {/* Other app routes */}
           <Route path='/about' element={<About />} />
           <Route path="/services" element={<Services />} />

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './Auth.css';
 import { Toaster, toast } from 'react-hot-toast';
 
 export default function StudentRegister() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -12,34 +13,86 @@ export default function StudentRegister() {
     phone: '',
     phoneVerified: false,
     otp: '',
-    sentOtp: '',
     location: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otpSuccess, setOtpSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  // OTP resend logic
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const resendInterval = useRef(null);
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
   }
-  function handleSendOtp(e) {
+
+  async function handleSendOtp(e) {
     e.preventDefault();
     setShowOtp(true);
-    setForm(f => ({ ...f, sentOtp: '1234' }));
     setOtpSuccess(false);
+    setResendDisabled(true);
+    setResendTimer(60); // 1 minute countdown
+    if (resendInterval.current) clearInterval(resendInterval.current);
+    resendInterval.current = setInterval(() => {
+      setResendTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(resendInterval.current);
+          setResendDisabled(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    try {
+      const res = await fetch('http://localhost:5000/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: form.phone, email: form.email })
+      });
+      const data = await res.json();
+      if (data.status) {
+        toast.success('OTP sent successfully!');
+      } else {
+        toast.error(data.msg || 'Could not send OTP.');
+        setShowOtp(false);
+        if (resendInterval.current) clearInterval(resendInterval.current);
+        setResendDisabled(false);
+      }
+    } catch (err) {
+      toast.error('Could not send OTP.');
+      setShowOtp(false);
+      if (resendInterval.current) clearInterval(resendInterval.current);
+      setResendDisabled(false);
+    }
   }
-  function handleVerifyOtp(e) {
+
+  async function handleVerifyOtp(e) {
     e.preventDefault();
-    if(form.otp === form.sentOtp && form.otp !== '') {
-      setForm(f => ({ ...f, phoneVerified: true }));
-      setOtpSuccess(true);
-      toast.success('Phone number verified!');
-    } else {
-      toast.error('Invalid OTP entered.');
+    try {
+      const res = await fetch('http://localhost:5000/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: form.phone, otp: form.otp })
+      });
+      const data = await res.json();
+      if (data.status) {
+        setForm(f => ({ ...f, phoneVerified: true }));
+        setOtpSuccess(true);
+        toast.success('Phone number verified!');
+      } else {
+        toast.error(data.msg || 'Invalid OTP entered.');
+        setOtpSuccess(false);
+      }
+    } catch (err) {
+      toast.error('Failed to verify OTP.');
       setOtpSuccess(false);
     }
   }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -65,6 +118,9 @@ export default function StudentRegister() {
         toast.success('Registration successful! Welcome, ' + (data.student?.firstName || 'Student') + '.');
         // Optionally reset form here
         // setForm({firstName: '', lastName: '', email: '', password: '', phone: '', phoneVerified: false, otp: '', sentOtp: '', location: '' });
+        setTimeout(() => {
+          navigate('/student/dashboard');
+        }, 1000);
       } else {
         toast.error(data.msg || 'Registration failed.');
       }
@@ -73,6 +129,13 @@ export default function StudentRegister() {
     }
     setLoading(false);
   }
+
+  // Clear interval if unmounting
+  useEffect(() => {
+    return () => {
+      if (resendInterval.current) clearInterval(resendInterval.current);
+    }
+  }, []);
 
   return (
     <section className="auth-section">
@@ -92,7 +155,17 @@ export default function StudentRegister() {
             <input type="email" name="email" value={form.email} onChange={handleChange} required />
           </label>
           <label>Password
-            <input type="password" name="password" value={form.password} onChange={handleChange} minLength={6} required />
+            <input type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={handleChange} minLength={6} required />
+            <div style={{marginTop:'0.5em'}}>
+              <input
+                type="checkbox"
+                id="showPasswordStudentRegister"
+                checked={showPassword}
+                onChange={() => setShowPassword(sp => !sp)}
+                style={{marginRight:'7px'}}
+              />
+              <label htmlFor="showPasswordStudentRegister">Show password</label>
+            </div>
           </label>
           <label>Phone Number
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -103,9 +176,21 @@ export default function StudentRegister() {
               {form.phoneVerified && <span style={{ color: 'green', fontWeight: 700, marginLeft: 5 }}>Verified</span>}
             </div>
             {showOtp && !form.phoneVerified && (
-              <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                <input type="text" name="otp" placeholder="Enter OTP (1234)" value={form.otp} onChange={handleChange} maxLength={6} />
+              <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems:'center' }}>
+                <input type="text" name="otp" placeholder="Enter OTP" value={form.otp} onChange={handleChange} maxLength={6} />
                 <button type="button" className="btn auth-btn" style={{ padding: '0.7rem 1.3rem', fontSize: '1rem' }} onClick={handleVerifyOtp}>Verify</button>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap: '5px'}}> 
+                  <button
+                    className="btn secondary-btn"
+                    style={{ padding: '0.3rem 1.1rem', fontSize: '0.95rem' }}
+                    onClick={handleSendOtp}
+                    type="button"
+                    disabled={resendDisabled}
+                  >Resend OTP</button>
+                  {resendDisabled && (
+                    <span className="otp-timer">Resend available in <b>{String(Math.floor(resendTimer/60)).padStart(2,'0')}:{String(resendTimer%60).padStart(2,'0')}</b></span>
+                  )}
+                </div>
                 {otpSuccess && <span style={{ color: 'green', fontWeight: 500, marginLeft: 8 }}>Verified!</span>}
               </div>
             )}

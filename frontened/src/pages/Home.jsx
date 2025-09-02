@@ -134,7 +134,7 @@ const Home = () => {
         <div className="container">
           <div className="grid-four-cols">
             <div className="footer-col">
-              <h4>Algol-Jniversity</h4>
+              <h4>Algo-University</h4>
               <p>Your modern platform for secure, AI-powered coding assessments and learning.</p>
             </div>
             <div className="footer-col">

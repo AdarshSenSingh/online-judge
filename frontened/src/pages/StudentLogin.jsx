@@ -1,34 +1,76 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../token/auth';
 import './Auth.css';
 import { Toaster, toast } from 'react-hot-toast';
 
 export default function StudentLogin() {
     const [form, setForm] = useState({ email: '', password: '', phone: '', otp: '', sentOtp: '' });
+    const [showPassword, setShowPassword] = useState(false);
     const [otpMode, setOtpMode] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
     const [otpSuccess, setOtpSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { storeTokenInLS } = useAuth();
 
     const handleChange = (e) => {
         setForm(f => ({ ...f, [e.target.name]: e.target.value }));
     };
-    const handleSendOtp = (e) => {
+    const handleSendOtp = async (e) => {
         e.preventDefault();
         setShowOtp(true);
-        setForm(f => ({ ...f, sentOtp: '1234' }));
         setOtpSuccess(false);
+        try {
+            const res = await fetch('http://localhost:5000/auth/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: form.phone })
+            });
+            const data = await res.json();
+            if (data.status) {
+                toast.success('OTP sent successfully!');
+            } else {
+                toast.error(data.msg || 'Could not send OTP.');
+                setShowOtp(false);
+            }
+        } catch (err) {
+            toast.error('Could not send OTP.');
+            setShowOtp(false);
+        }
     };
-    const handleVerifyOtp = (e) => {
+    const handleVerifyOtp = async (e) => {
         e.preventDefault();
-        if (form.otp === form.sentOtp && form.otp !== '') {
-            setOtpSuccess(true);
-            toast.success('Logged in with OTP!');
-        } else {
-            toast.error('Invalid OTP.');
+        setLoading(true);
+        try {
+            const res = await fetch('http://localhost:5000/auth/login-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: form.phone, otp: form.otp })
+            });
+            const data = await res.json();
+            if (data.status) {
+                setOtpSuccess(true);
+                // store token for cross-tab/session login
+                if (data.token) storeTokenInLS(data.token);
+                toast.success('Logged in with OTP!');
+                setTimeout(() => {
+                    navigate('/student/dashboard', { replace: true });
+                }, 1200);
+            } else {
+                // filter out registration-specific errors during login
+                let errMsg = data.msg || 'Invalid OTP.';
+                if (errMsg.toLowerCase().includes('already registered')) {
+                    errMsg = 'Invalid OTP or not registered.';
+                }
+                toast.error(errMsg);
+                setOtpSuccess(false);
+            }
+        } catch (err) {
+            toast.error('OTP login failed.');
             setOtpSuccess(false);
         }
+        setLoading(false);
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -41,12 +83,19 @@ export default function StudentLogin() {
             });
             const data = await res.json();
             if (data.status) {
+                // store token for cross-tab/session login
+                if (data.token) storeTokenInLS(data.token);
                 toast.success('Login successful! Welcome ' + (data.student?.firstName || 'Student'));
                 setTimeout(() => {
-                  navigate('/student');
+                  navigate('/student/dashboard', { replace: true });
                 }, 1200); // Allows toast to show for a moment before navigating
             } else {
-                toast.error(data.msg || 'Login failed.');
+                // filter out registration-specific errors during login
+                let errMsg = data.msg || 'Login failed.';
+                if (errMsg.toLowerCase().includes('already registered')) {
+                    errMsg = 'Account not found. Please check your number or register first.';
+                }
+                toast.error(errMsg);
             }
         } catch {
             toast.error('Failed to connect to server.');
@@ -76,7 +125,17 @@ export default function StudentLogin() {
                         <input type="email" name="email" value={form.email} onChange={handleChange} required />
                     </label>
                     <label>Password
-                        <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={6} />
+                        <input type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={handleChange} required minLength={6} />
+                        <div style={{marginTop:'0.5em'}}>
+                          <input
+                            type="checkbox"
+                            id="showPasswordStudentLogin"
+                            checked={showPassword}
+                            onChange={()=>setShowPassword(sp=>!sp)}
+                            style={{marginRight:'7px'}}
+                          />
+                          <label htmlFor="showPasswordStudentLogin">Show password</label>
+                        </div>
                     </label>
                     <button className="btn primary-btn auth-btn" type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
                   </form>

@@ -24,7 +24,8 @@ export default function InstructorRegister() {
     portfolio: '',
     idDocument: null,
   });
-  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [notification, setNotification] = useState(null); // { type: 'success' | 'error', message: string }
   const [showOtp, setShowOtp] = useState(false);
   const [otpSuccess, setOtpSuccess] = useState(false);
 
@@ -38,7 +39,7 @@ export default function InstructorRegister() {
   }
   async function handleSendOtp(e) {
     e.preventDefault();
-    setError("");
+    setNotification(null);
     setOtpSuccess(false);
     try {
       const res = await fetch("http://localhost:5000/auth/send-otp", {
@@ -50,13 +51,13 @@ export default function InstructorRegister() {
       if (data.status) {
         setShowOtp(true);
         setForm(f => ({ ...f, sentOtp: '', otp: '' })); // clear any old OTP
-        setError("");
+        setNotification({ type: 'success', message: data.msg || 'OTP sent successfully.' });
       } else {
-        setError(data.msg || "Failed to send OTP.");
+        setNotification({ type: 'error', message: data.msg || "Failed to send OTP." });
         setShowOtp(false);
       }
     } catch (err) {
-      setError("Network/Server error sending OTP");
+      setNotification({ type: 'error', message: "Network/Server error sending OTP" });
       setShowOtp(false);
       console.log("handleSendOtp error:", err);
     }
@@ -64,7 +65,7 @@ export default function InstructorRegister() {
 
   async function handleVerifyOtp(e) {
     e.preventDefault();
-    setError("");
+    setNotification(null);
     try {
       const res = await fetch("http://localhost:5000/auth/verify-otp", {
         method: "POST",
@@ -75,27 +76,67 @@ export default function InstructorRegister() {
       if (data.status) {
         setForm(f => ({ ...f, phoneVerified: true }));
         setOtpSuccess(true);
-        setError("");
+        setNotification({ type: 'success', message: data.msg || 'OTP verified successfully.' });
       } else {
-        setError(data.msg || "OTP verification failed.");
+        setNotification({ type: 'error', message: data.msg || "OTP verification failed." });
         setOtpSuccess(false);
       }
     } catch (err) {
-      setError("Network/Server error verifying OTP");
+      setNotification({ type: 'error', message: "Network/Server error verifying OTP" });
       setOtpSuccess(false);
       console.log("handleVerifyOtp error:", err);
     }
   }
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Send data to backend here, for now just frontend
+    setNotification(null);
+    // Basic client validation
+    if (!form.phoneVerified) {
+      setNotification({ type: 'error', message: 'Please verify your phone number by OTP before registering.' });
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:5000/auth/instructor/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          password: form.password,
+          phone: form.phone,
+          phoneVerified: true,
+          location: '',
+        }),
+      });
+      const data = await res.json();
+      if (data.status) {
+        setNotification({ type: 'success', message: data.msg || 'Registration successful! You may now log in.' });
+        // Optionally reset form here
+      } else {
+        setNotification({ type: 'error', message: data.msg || 'Registration failed.' });
+      }
+    } catch (err) {
+      setNotification({ type: 'error', message: 'Network/Server error during registration.' });
+      console.log("handleRegister error:", err);
+    }
   }
 
   return (
     <section className="auth-section">
       <div className="auth-card">
         <h2 className="auth-title">Instructor Signup</h2>
-        {error && <div className="auth-error">{error}</div>}
+        {notification && (
+          <div style={{
+            color: notification.type === 'success' ? 'green' : 'red',
+            background: notification.type === 'success' ? '#eafce5' : '#fee',
+            border: `1.5px solid ${notification.type === 'success' ? 'green' : 'red'}`,
+            marginBottom: 16,
+            padding: '8px 13px',
+            borderRadius: 5,
+            fontWeight: 500
+          }}>{notification.message}</div>
+        )}
         <form onSubmit={handleSubmit} encType="multipart/form-data">
           <div style={{ display: 'flex', gap: '1.2rem' }}>
             <label style={{ flex: 1 }}>First Name
@@ -109,7 +150,17 @@ export default function InstructorRegister() {
             <input type="email" name="email" value={form.email} onChange={handleChange} required />
           </label>
           <label>Password
-            <input type="password" name="password" value={form.password} onChange={handleChange} minLength={6} required />
+            <input type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={handleChange} minLength={6} required />
+            <div style={{marginTop:'0.5em'}}>
+              <input
+                type="checkbox"
+                id="showPasswordRegister"
+                checked={showPassword}
+                onChange={()=>setShowPassword(sp=>!sp)}
+                style={{marginRight:'7px'}}
+              />
+              <label htmlFor="showPasswordRegister">Show password</label>
+            </div>
           </label>
           <label>Phone Number
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

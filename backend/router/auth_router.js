@@ -22,6 +22,12 @@ router.get('/google/callback',
   authRoute.googleCallback
 );
 
+// Instructor registration route
+router.route('/instructor/register').post(authRoute.instructorRegister);
+
+// Instructor login route
+router.route('/instructor/login').post(authRoute.instructorLogin);
+
 module.exports = router;
 
 

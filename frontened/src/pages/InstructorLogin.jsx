@@ -5,6 +5,7 @@ import { Toaster, toast } from 'react-hot-toast';
 
 export default function InstructorLogin() {
     const [form, setForm] = useState({ email: '', password: '', phone: '', otp: '', sentOtp: '' });
+    const [showPassword, setShowPassword] = useState(false);
     const [otpMode, setOtpMode] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
     const [otpSuccess, setOtpSuccess] = useState(false);
@@ -44,10 +45,13 @@ export default function InstructorLogin() {
             });
             const data = await res.json();
             if (data.status) {
+                // Store authentication info before redirect
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userRole', 'instructor');
+                // Optionally, update AuthContext here if available
+
                 toast.success('Login successful! Welcome ' + (data.instructor?.firstName || 'Instructor'));
-                setTimeout(() => {
-                  navigate('/instructor');
-                }, 1200);
+                navigate('/instructor', { replace: true });
             } else {
                 toast.error(data.msg || 'Login failed.');
             }
@@ -79,7 +83,17 @@ export default function InstructorLogin() {
                         <input type="email" name="email" value={form.email} onChange={handleChange} required />
                     </label>
                     <label>Password
-                        <input type="password" name="password" value={form.password} onChange={handleChange} required minLength={6} />
+                        <input type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={handleChange} required minLength={6} />
+                        <div style={{marginTop:'0.5em'}}>
+                          <input
+                            type="checkbox"
+                            id="showPasswordLogin"
+                            checked={showPassword}
+                            onChange={()=>setShowPassword(sp=>!sp)}
+                            style={{marginRight:'7px'}}
+                          />
+                          <label htmlFor="showPasswordLogin">Show password</label>
+                        </div>
                     </label>
                     <button className="btn primary-btn auth-btn" type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
                   </form>
