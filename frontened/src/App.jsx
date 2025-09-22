@@ -1,5 +1,4 @@
 import Home from "./pages/Home";
-import Navbar from './components/Navbar';
 import Compiler from './pages/Compiler';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
@@ -25,7 +24,6 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        <Navbar />
         <Routes>
           <Route path='/' element={<PublicRoute><Home /></PublicRoute>} />
           {/* Role-based auth pages */}
