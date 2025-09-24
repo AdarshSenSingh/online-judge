@@ -327,30 +327,7 @@ const Home = () => {
               Elevate your coding skills with secure, AI‑powered assessments. Learn, practice, and ace technical interviews with instant feedback and rich insights.
             </p>
 
-            {/* Feature chips */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
-              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#8ac4ff,#b7a6ff)">
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
-                  <img src={brandLogo} alt="CodeKaro" style={{ width: 18, height: 18 }} /> Official Platform
-                </div>
-              </DoubleCard>
-              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#c0f0ff,#d3d0ff)">
-                <div title="AI generates smart hints" style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
-                  <span role="img" aria-label="robot">🤖</span> AI‑Powered Hints
-                </div>
-              </DoubleCard>
-              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#ffd7e6,#fff1c1)">
-                <div title="Real unit tests" style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
-                  <span role="img" aria-label="test">🧪</span> Real Test Cases
-                </div>
-              </DoubleCard>
-              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#bce0ff,#c8ffe3)">
-                <div title="Google OAuth" style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
-                  <img src={googleIcon} alt="Google" style={{ width: 18, height: 18 }} /> OAuth Login
-                </div>
-              </DoubleCard>
-            </div>
-
+           
             {/* Role cards with bigger CTAs */}
             <div style={{ display: "flex", gap: 16, marginTop: 22, flexWrap: "wrap" }}>
               <DoubleCard style={{ flex: "1 1 260px" }}>
@@ -381,6 +358,29 @@ const Home = () => {
                 </div>
               </DoubleCard>
             </div>
+             {/* Feature chips */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
+              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#8ac4ff,#b7a6ff)">
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
+                  <img src={brandLogo} alt="CodeKaro" style={{ width: 18, height: 18 }} /> Official Platform
+                </div>
+              </DoubleCard>
+              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#c0f0ff,#d3d0ff)">
+                <div title="AI generates smart hints" style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
+                  <span role="img" aria-label="robot">🤖</span> AI‑Powered Hints
+                </div>
+              </DoubleCard>
+              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#ffd7e6,#fff1c1)">
+                <div title="Real unit tests" style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
+                  <span role="img" aria-label="test">🧪</span> Real Test Cases
+                </div>
+              </DoubleCard>
+              <DoubleCard padding={8} radius={999} gradient="linear-gradient(90deg,#bce0ff,#c8ffe3)">
+                <div title="Google OAuth" style={{ display: "flex", alignItems: "center", gap: 8, color: "#2b3b75" }}>
+                  <img src={googleIcon} alt="Google" style={{ width: 18, height: 18 }} /> OAuth Login
+                </div>
+              </DoubleCard>
+            </div>
 
             {/* Stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(160px,1fr))", gap: 12, marginTop: 16 }}>
@@ -408,8 +408,8 @@ const Home = () => {
                 src={heroImages[hero.index]}
                 alt="Coding platform illustration"
                 style={{
-                  width: "min(100%, 420px)",
-                  maxWidth: 420,
+                  width: "min(100%, 300px)",
+                  maxWidth: 300,
                   borderRadius: 24,
                   border: "2px solid rgba(160, 180, 255, 0.6)",
                   boxShadow: "0 18px 40px rgba(100,130,255,0.25)",
