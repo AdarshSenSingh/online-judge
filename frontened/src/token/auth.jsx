@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react/prop-types */
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 // Create the AuthContext
 export const AuthContext = createContext();
@@ -20,7 +20,24 @@ export const AuthProvider = ({ children }) => {
     const LogoutUser = () => {
         setToken("");
         localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        // Notify other tabs immediately
+        try {
+            window.localStorage.setItem('token', "");
+            window.localStorage.removeItem('token');
+        } catch {}
     };
+
+    // Sync auth state across tabs and windows
+    useEffect(() => {
+        const onStorage = (e) => {
+            if (e.key === 'token') {
+                setToken(localStorage.getItem('token'));
+            }
+        };
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, []);
 
     return (
         <AuthContext.Provider value={{ isLogin, storeTokenInLS, LogoutUser }}>
